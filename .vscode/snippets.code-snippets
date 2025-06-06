@@ -1,0 +1,138 @@
+{
+  "returnJSX": {
+    "prefix": "rjsx",
+    "body": [
+      "return (",
+      "  <div id='screen'>",
+      "    {renderHeader()}",
+      "    {renderContent()}",
+      "  </div>",
+      ");"
+    ],
+    "description": "Рендерит JSX return"
+  },
+  // CUSTOM COMPONENT
+  "cc": {
+    "prefix": "cc",
+    "body": [
+      "'use client';",
+      "",
+      "import React from 'react'",
+      "",
+      "export const ${TM_FILENAME_BASE}: React.FC = () => {",
+      "  return <div>${TM_FILENAME_BASE}</div>;",
+      "};"
+    ],
+    "description": "!!! CUSTOM COMPONENT !!!"
+  },
+  // IMPORT COMPONENTS
+  "ic": {
+    "prefix": "ic",
+    "body": [
+      "import {${1:components}} from '../${1:components}';"
+    ],
+    "description": "Импортирует компонент"
+  },
+  // RENDER BUTTON
+  "rb": {
+    "prefix": "rb",
+    "body": [
+      "const renderButton = (): JSX.Element => {",
+      "return <View><components.Button label='button' /></View>;",
+      "};"
+    ],
+    "description": "Возвращает пустой JSX"
+  },
+  // IMPORT USE_APP_SELECTOR
+  "uas": {
+    "prefix": "uas",
+    "body": ["import {useAppSelector} from '../store';"],
+    "description": "Импортирует useAppSelector"
+  },
+  // IMPORT TEXT
+  "it": {
+    "prefix": "it",
+    "body": ["import {text} from '../text';"],
+    "description": "Импортирует text"
+  },
+  // IMPORT SVG
+  "is": {
+    "prefix": "is",
+    "body": ["import {stores} from '../stores';"],
+    "description": "Импортирует stores"
+  },
+  // IMPORT NAVIGATION
+  "in": {
+    "prefix": "in",
+    "body": ["import {StackActions,useNavigation,CommonActions,} from '@react-navigation/native';"],
+    "description": "Импортирует navigation"
+  },
+  // RENDER HEADER
+  "rh": {
+    "prefix": "rh",
+    "body": [
+      "const renderHeader = () => {",
+      "  return <components.Header />;",
+      "};"
+    ],
+    "description": "Рендерит шапку"
+  },
+  // IMPORT ROUTES
+  "ir": {
+    "prefix": "ir",
+    "body": ["import {Routes} from '../routes';"],
+    "description": "Импортирует routes"
+  },
+  // IMPORT UTILS
+  "iu": {
+    "prefix": "iu",
+    "body": ["import {utils} from '../utils';"],
+    "description": "Импортирует utils"
+  },
+  // RENDER CONTENT
+  "rc": {
+    "prefix": "rc",
+    "body": [
+      "const renderContent = () => {",
+        "return <div>renderContent</div>;",
+      "};"
+    ],
+    "description": "Рендерит контент"
+  },
+  // IMPORT USE_APP_DISPATCH
+  "uad": {
+    "prefix": "uad",
+    "body": ["import {useAppDispatch} from '../store';"],
+    "description": "Импортирует useAppDispatch"
+  },
+  // IMPORT ACTIONS
+  "ia": {
+    "prefix": "ia",
+    "body": ["import {actions} from '../store/actions';"],
+    "description": "Импортирует actions"
+  },
+  // IMPORT ITEMS
+  "ii": {
+    "prefix": "ii",
+    "body": ["import {items} from '../items';"],
+    "description": "Импортирует items"
+  },
+  // IMPORT THEME
+  "th": {
+    "prefix": ["th", "theme", "import theme"],
+    "body": ["import {theme} from '../constants';"],
+    "description": "!!! import {theme} from '../constants'; !!!"
+  },
+  // IMPORT THEME
+  "svg": {
+    "prefix": "svg",
+    "body": ["import {svg} from '../svg';"],
+    "description": "Импортирует svg"
+  },
+  // IMPORT CLIENT
+  "cl": {
+    "prefix": "cl",
+    "body": ["'use clinet';"],
+    "description": "Импортирует clinet"
+  },
+}
