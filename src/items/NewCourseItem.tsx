@@ -40,7 +40,7 @@ export const NewCourseItem: React.FC<Props> = ({index, course}) => {
         height={0}
         priority={true}
         sizes='100vw'
-        src={course.threeDPreview}
+        src={course.image}
         alt={course.name}
         style={{
           height: 'auto',

@@ -17,6 +17,7 @@ import {items} from '../../items';
 import {Routes} from '../../routes';
 import {theme} from '../../constants';
 import {components} from '../../components';
+import {LoadingSkeleton} from '../../components/LoadingSkeleton';
 
 import type {CourseType} from '../../types';
 import type {CategoryType} from '../../types';
@@ -127,6 +128,7 @@ export const Home: React.FC<Props> = ({courses, categories: initialCategories}) 
   const [liveWorkshops, setLiveWorkshops] = useState<Workshop[]>([]);
   const [popularWorkshops, setPopularWorkshops] = useState<Workshop[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -144,6 +146,7 @@ export const Home: React.FC<Props> = ({courses, categories: initialCategories}) 
 
   const fetchSliders = async () => {
     try {
+      setIsLoading(true);
       const response = await fetch('/api/sliders/list');
       const data = await response.json();
       if (data.success) {
@@ -153,6 +156,7 @@ export const Home: React.FC<Props> = ({courses, categories: initialCategories}) 
       console.error('Error fetching sliders:', error);
     } finally {
       setLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -201,7 +205,7 @@ export const Home: React.FC<Props> = ({courses, categories: initialCategories}) 
   const handleSliderClick = (link: string) => {
     const workshopId = link.split('id=')[1];
     if (workshopId) {
-      router.push(`/workshop-details/${workshopId}`);
+      router.push(`/workshop-detail/${workshopId}`);
     }
   };
 
@@ -582,6 +586,10 @@ export const Home: React.FC<Props> = ({courses, categories: initialCategories}) 
       </main>
     );
   };
+
+  if (isLoading) {
+    return <LoadingSkeleton />;
+  }
 
   return (
     <components.Screen>

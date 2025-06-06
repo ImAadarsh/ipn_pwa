@@ -43,7 +43,7 @@ export enum Routes {
   FORGOT_PASSWORD = '/forgot-password',
   PAYMENT_SUCCESS = '/payment-success',
   CATEGORY_LIST = '/category-list/:id',
-  COURSE_DETAILS = '/course-details/:id',
+  COURSE_DETAILS = '/workshop-detail/:id',
   COURSE_COMPLETED = '/course-completed',
   SHIPPING_DETAILS = '/shipping-details',
   PROMOCODES_EMPTY = '/promocodes-empty',

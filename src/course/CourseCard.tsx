@@ -56,7 +56,7 @@ export const CourseCard: React.FC<Props> = ({
             width={675}
             height={196}
             sizes='100vw'
-            alt='course'
+            alt={course.name}
             priority={true}
             src={`${URLS.IMAGE_URL}${course.image}`}
             style={{
@@ -82,16 +82,10 @@ export const CourseCard: React.FC<Props> = ({
               {course.name}
             </text.H6>
           </div>
-          <div style={{...utils.rowCenter()}}>
-            <svg.ClockSvg color={theme.colors.secondaryTextColor} />
-            <text.T14
-              style={{
-                marginLeft: 6,
-                marginRight: 'auto',
-                color: theme.colors.secondaryTextColor,
-              }}
-            >
-              {course.trainer.name}
+          <div style={{display: 'flex', alignItems: 'center', marginTop: 8}}>
+            <svg.ClockSvg />
+            <text.T14 style={{marginLeft: 6, marginRight: 'auto'}}>
+              {course.trainer?.name || 'Trainer'}
             </text.T14>
             {course.price >= 0 && <elements.CoursePrice course={course} />}
           </div>
@@ -135,7 +129,7 @@ export const CourseCard: React.FC<Props> = ({
             width={375}
             height={196}
             sizes='100vw'
-            alt='course'
+            alt={course.name}
             priority={true}
             src={`${URLS.IMAGE_URL}${course.image}`}
             style={{
@@ -161,10 +155,10 @@ export const CourseCard: React.FC<Props> = ({
               {course.name}
             </text.H6>
           </div>
-          <div style={{...utils.rowCenter()}}>
+          <div style={{display: 'flex', alignItems: 'center', marginTop: 8}}>
             <svg.ClockSvg />
             <text.T14 style={{marginLeft: 6, marginRight: 'auto'}}>
-              {course.trainer.name}
+              {course.trainer?.name || 'Trainer'}
             </text.T14>
             {course.price >= 0 && <elements.CoursePrice course={course} />}
           </div>
@@ -206,7 +200,7 @@ export const CourseCard: React.FC<Props> = ({
             height={196}
             priority={true}
             src={`${URLS.IMAGE_URL}${course.image}`}
-            alt='course'
+            alt={course.name}
             style={{
               width: '100%',
               height: '100%',

@@ -8,6 +8,7 @@ import {Routes} from '../../routes';
 import {theme} from '../../constants';
 import {components} from '../../components';
 import {course as elements} from '../../course';
+import {WorkshopListSkeleton} from '../../components/WorkshopListSkeleton';
 
 interface Workshop {
   id: number;
@@ -28,9 +29,11 @@ interface Workshop {
 export default function LiveWorkshops() {
   const router = useRouter();
   const [workshops, setWorkshops] = useState<Workshop[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
+    setIsClient(true);
     const userData = localStorage.getItem('user');
     if (!userData) {
       router.push('/sign-in');
@@ -41,6 +44,7 @@ export default function LiveWorkshops() {
 
   const fetchWorkshops = async () => {
     try {
+      setIsLoading(true);
       const response = await fetch('/api/workshops/live');
       const data = await response.json();
       
@@ -52,19 +56,17 @@ export default function LiveWorkshops() {
     } catch (error) {
       console.error('Error fetching live workshops:', error);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
+  if (!isClient) {
+    return null;
+  }
+
   const renderContent = () => {
-    if (loading) {
-      return (
-        <main className='scrollable container' style={{paddingTop: 20, paddingBottom: 20}}>
-          <div className="flex justify-center items-center min-h-[200px]">
-            Loading...
-          </div>
-        </main>
-      );
+    if (isLoading) {
+      return <WorkshopListSkeleton />;
     }
 
     if (!workshops.length) {
@@ -79,6 +81,37 @@ export default function LiveWorkshops() {
 
     return (
       <main className='scrollable'>
+        <section className='container' style={{marginTop: 10, marginBottom: 20}}>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              padding: 20,
+              borderRadius: 10,
+              border: `1px solid ${theme.colors.white}50`,
+              backgroundColor: `${theme.colors.white}50`,
+              boxShadow: '0px 4px 10px rgba(37, 73, 150, 0.05)',
+            }}
+          >
+            <text.H2 style={{marginBottom: 12}}>Live Workshops</text.H2>
+            <div
+              style={{
+                width: '100%',
+                height: 42,
+                borderRadius: 5,
+                display: 'flex',
+                alignItems: 'center',
+                padding: '0 16px',
+                background: `linear-gradient(90deg, rgba(246, 189, 229, 0.5) 0%, rgba(174, 183, 248, 0.5) 100%)`,
+              }}
+            >
+              <text.T14 style={{color: theme.colors.bodyTextColor}}>
+                {workshops.length} workshops available
+              </text.T14>
+            </div>
+          </div>
+        </section>
+
         <section style={{paddingBottom: 30}}>
           <div className='container'>
             <components.BlockHeading

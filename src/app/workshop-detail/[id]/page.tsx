@@ -1,8 +1,6 @@
 import type {Metadata, Viewport} from 'next';
-
-import {data} from '../../../data';
 import {theme} from '../../../constants';
-import {CourseDetails} from './CourseDetails';
+import {CourseDetails} from './workshopDetail';
 
 export const metadata: Metadata = {
   title: 'Course Details',
@@ -17,8 +15,5 @@ type Params = {
 
 export default async function CourseDetailsPage({params}: Params) {
   const id = (await params).id;
-
-  const [courses] = await Promise.all([data.getCourses()]);
-
-  return <CourseDetails courses={courses} id={id} />;
+  return <CourseDetails id={id} />;
 }
