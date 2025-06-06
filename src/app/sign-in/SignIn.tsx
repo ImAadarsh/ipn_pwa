@@ -9,14 +9,49 @@ import {text} from '../../text';
 import {Routes} from '../../routes';
 import {theme} from '../../constants';
 import {components} from '../../components';
+import { PhoneEmailButton } from '../../components/PhoneEmailButton';
 
 export const SignIn: React.FC = () => {
   const router = useRouter();
-  const [rememberMe, setRememberMe] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     document.body.style.backgroundColor = theme.colors.white;
   }, []);
+
+  const handleVerificationSuccess = async (userJsonUrl: string) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const response = await fetch('/api/auth/verify-phone', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userJsonUrl }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Store the token in localStorage or your preferred storage method
+        localStorage.setItem('authToken', data.token);
+        localStorage.setItem('userId', data.userId.toString());
+        
+        // Redirect to home page
+        router.push(Routes.HOME);
+      } else {
+        setError('Failed to verify phone number. Please try again.');
+      }
+    } catch (err) {
+      setError('An error occurred. Please try again.');
+      console.error('Verification error:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const renderBackground = () => {
     return <components.Background version={1} />;
@@ -54,85 +89,41 @@ export const SignIn: React.FC = () => {
           {/* HEADER */}
           <section>
             <text.H1 style={{marginBottom: 14, textAlign: 'center'}}>
-              Welcome Back!
+              Welcome Back to IPN Academy!
             </text.H1>
             <text.T18 style={{marginBottom: 26, textAlign: 'center'}}>
               Sign in to continue
             </text.T18>
           </section>
 
-          {/* INPUT FIELDS */}
-          <section style={{marginBottom: 20}}>
-            <components.InputField
-              label='Email'
-              inputType='email'
-              placeholder='Enter your email'
-              containerStyle={{marginBottom: '10px'}}
-            />
-            <components.InputField
-              label='Password'
-              inputType='password'
-              placeholder='Enter your password'
-            />
+          {/* ERROR MESSAGE */}
+          {error && (
+            <section style={{ marginBottom: 20, color: 'red', textAlign: 'center' }}>
+              <text.T16>{error}</text.T16>
+            </section>
+          )}
+
+          {/* PHONE.EMAIL BUTTON */}
+          <section style={{ marginBottom: 20 }}>
+            <PhoneEmailButton onVerificationSuccess={handleVerificationSuccess} />
           </section>
 
-          {/* REMEMBER ME */}
-          <section
-            style={{
-              marginBottom: 30,
-              display: 'flex',
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-            }}
-          >
-            <div
-              style={{
-                gap: '10px',
-                display: 'flex',
-                flexDirection: 'row',
-                alignItems: 'center',
-              }}
-              className='clickable'
-              onClick={() => setRememberMe(!rememberMe)}
-            >
-              <div
-                style={{
-                  width: 16,
-                  height: 16,
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  borderRadius: 4,
-                  border: '1px solid #333333',
-                }}
-              >
-                {rememberMe && <svg.InputCheckSvg />}
-              </div>
-              <text.T16>Remember me</text.T16>
-            </div>
-            <text.T16
-              onClick={() => router.push(Routes.FORGOT_PASSWORD)}
-              style={{color: theme.colors.mainColor, fontWeight: 700}}
-              className='clickable'
-            >
-              Forgot password?
-            </text.T16>
-          </section>
-
-          {/* BUTTON */}
-          <section style={{marginBottom: 20}}>
-            <components.Button label='Sign In' href={Routes.HOME} />
-          </section>
+          {/* LOADING INDICATOR */}
+          {isLoading && (
+            <section style={{ textAlign: 'center', marginBottom: 20 }}>
+              <text.T16>Verifying...</text.T16>
+            </section>
+          )}
 
           {/* REGISTER */}
           <section style={{marginBottom: 38}}>
             <text.T16>
-              Don’t have an account?{' '}
+              Don't have an account?{' '}
               <Link
                 href={Routes.SIGN_UP}
                 style={{color: theme.colors.mainColor, fontWeight: 'bold'}}
               >
-                Sign up.
+                Create Free Account.
               </Link>
             </text.T16>
           </section>

@@ -48,7 +48,7 @@ export const ForgotPasswordSentEmail: React.FC = () => {
             ...theme.fonts.League_Spartan,
           }}
         >
-          Nuton
+          IPN Academy
         </text.T12>
         <Image
           src={`${URLS.MAIN_URL}/assets/images/04.png`}

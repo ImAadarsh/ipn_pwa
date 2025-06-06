@@ -49,7 +49,7 @@ export const CourseCompleted: React.FC = () => {
             ...theme.fonts.League_Spartan,
           }}
         >
-          Nuton
+          IPN Academy
         </span>
         <Image
           src={`${URLS.MAIN_URL}/assets/images/07.png`}
