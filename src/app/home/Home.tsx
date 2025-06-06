@@ -4,6 +4,11 @@ import Link from 'next/link';
 import Image from 'next/image';
 import React, {useEffect, useState} from 'react';
 import {Swiper, SwiperSlide} from 'swiper/react';
+import {useRouter} from 'next/navigation';
+import {Autoplay, Pagination, Navigation} from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/pagination';
+import 'swiper/css/navigation';
 
 import {svg} from '../../svg';
 import {text} from '../../text';
@@ -22,6 +27,47 @@ type Props = {
   courses: CourseType[];
   categories: CategoryType[];
 };
+
+interface User {
+  id: number;
+  name: string;
+  email: string;
+  mobile: string;
+  profile: string;
+  token: string;
+}
+
+interface Slider {
+  id: number;
+  image: string;
+  link: string;
+  button_text: string;
+}
+
+interface Category {
+  id: number;
+  name?: string;
+  image?: string;
+  quantity?: string;
+  audience?: string[];
+  workshop_count?: number;
+}
+
+interface Workshop {
+  id: number;
+  name: string;
+  image: string;
+  start_date: string;
+  duration: string;
+  price: number;
+  price_2: number;
+  cut_price: number | null;
+  description: string;
+  trainer_name: string;
+  trainer_designation: string;
+  trainer_image: string;
+  trainer_description: string;
+}
 
 const SearchSvg: React.FC = () => {
   return (
@@ -57,10 +103,111 @@ const carousel: CarouselType[] = [
   },
 ];
 
-export const Home: React.FC<Props> = ({courses, categories}) => {
+const categoryGradients = [
+  `linear-gradient(45deg, ${theme.colors.mainColor}, ${theme.colors.accentColor})`,
+  `linear-gradient(45deg, ${theme.colors.persianRose}, ${theme.colors.mainOrange})`,
+  `linear-gradient(45deg, ${theme.colors.coralRed}, ${theme.colors.mainColor})`,
+  `linear-gradient(45deg, ${theme.colors.mainOrange}, ${theme.colors.persianRose})`,
+  `linear-gradient(45deg, ${theme.colors.accentColor}, ${theme.colors.coralRed})`,
+];
+
+const categoryImages = [
+  `${URLS.IMAGE_URL}/assets/categories/education.png`,
+  `${URLS.IMAGE_URL}/assets/categories/technology.png`,
+  `${URLS.IMAGE_URL}/assets/categories/science.png`,
+  `${URLS.IMAGE_URL}/assets/categories/arts.png`,
+  `${URLS.IMAGE_URL}/assets/categories/business.png`,
+];
+
+export const Home: React.FC<Props> = ({courses, categories: initialCategories}) => {
+  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+  const [sliders, setSliders] = useState<Slider[]>([]);
+  const [categories, setCategories] = useState<Category[]>(initialCategories || []);
+  const [liveWorkshops, setLiveWorkshops] = useState<Workshop[]>([]);
+  const [popularWorkshops, setPopularWorkshops] = useState<Workshop[]>([]);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
+    const userData = localStorage.getItem('user');
+    if (!userData) {
+      router.push('/sign-in');
+      return;
+    }
+    setUser(JSON.parse(userData));
     document.body.style.backgroundColor = theme.colors.white;
-  }, []);
+    fetchSliders();
+    fetchCategories();
+    fetchLiveWorkshops();
+    fetchPopularWorkshops();
+  }, [router]);
+
+  const fetchSliders = async () => {
+    try {
+      const response = await fetch('/api/sliders/list');
+      const data = await response.json();
+      if (data.success) {
+        setSliders(data.sliders);
+      }
+    } catch (error) {
+      console.error('Error fetching sliders:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch('/api/categories/list');
+      const data = await response.json();
+      if (data.success) {
+        setCategories(data.categories);
+      }
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    }
+  };
+
+  const fetchLiveWorkshops = async () => {
+    try {
+      const response = await fetch('/api/workshops/live?limit=6');
+      const data = await response.json();
+      
+      if (data.success) {
+        setLiveWorkshops(data.workshops);
+      } else {
+        console.error('Failed to fetch live workshops:', data.message);
+      }
+    } catch (error) {
+      console.error('Error fetching live workshops:', error);
+    }
+  };
+
+  const fetchPopularWorkshops = async () => {
+    try {
+      const response = await fetch('/api/workshops/popular?limit=6');
+      const data = await response.json();
+      
+      if (data.success) {
+        setPopularWorkshops(data.workshops);
+      } else {
+        console.error('Failed to fetch popular workshops:', data.message);
+      }
+    } catch (error) {
+      console.error('Error fetching popular workshops:', error);
+    }
+  };
+
+  const handleSliderClick = (link: string) => {
+    const workshopId = link.split('id=')[1];
+    if (workshopId) {
+      router.push(`/workshop-details/${workshopId}`);
+    }
+  };
+
+  const handleCategoryClick = (categoryId: number) => {
+    router.push(`/category/${categoryId}`);
+  };
 
   const [activeSlide, setActiveSlide] = useState(0);
 
@@ -69,10 +216,12 @@ export const Home: React.FC<Props> = ({courses, categories}) => {
   };
 
   const renderSearchBar = () => {
+    if (!user) return null;
+    
     return (
       <section className='container' style={{marginTop: 10, marginBottom: 20}}>
         <Link
-          href={Routes.CATEGORY_LIST}
+          href='live-workshops'
           style={{
             display: 'flex',
             flexDirection: 'column',
@@ -97,10 +246,11 @@ export const Home: React.FC<Props> = ({courses, categories}) => {
               height={24}
               sizes='100vw'
               priority={true}
-              src={`${URLS.MAIN_URL}/assets/users/01.png`}
+              style={{borderRadius: '50px'}}
+              src={user.profile ? `${URLS.IMAGE_URL}${user.profile}` : `${URLS.IMAGE_URL}/public/img/workshop/oqDdQPGw3UZnIlmNZojNfTvHHVA9KHjO1OqDHJE6.png`}
             />
             <text.H2 style={{lineHeight: 1.2, marginTop: 4}}>
-              Hello, Kristin
+              Hello, {user.name}
             </text.H2>
           </div>
           <span
@@ -112,7 +262,7 @@ export const Home: React.FC<Props> = ({courses, categories}) => {
               color: theme.colors.bodyTextColor,
             }}
           >
-            Find a course you want to learn.
+            Find a workshop you want to learn.
           </span>
           <button
             style={{
@@ -150,31 +300,40 @@ export const Home: React.FC<Props> = ({courses, categories}) => {
   };
 
   const renderCarousel = () => {
+    if (loading) return null;
+    
     return (
       <section style={{marginBottom: 30}}>
         <Swiper
+          modules={[Autoplay, Pagination]}
           slidesPerView={'auto'}
           pagination={{clickable: true}}
-          navigation={true}
           mousewheel={true}
+          autoplay={{
+            delay: 3000,
+            disableOnInteraction: false,
+          }}
+          loop={true}
           style={{marginBottom: 16}}
           onSlideChange={handleSlideChange}
         >
-          {carousel.map((image, index) => {
+          {sliders.map((slider, index) => {
             return (
-              <SwiperSlide key={index} style={{padding: '0 20px'}}>
-                <Link href={Routes.CATEGORY_LIST}>
+              <SwiperSlide key={slider.id} style={{padding: '0 20px'}}>
+                <div 
+                  onClick={() => handleSliderClick(slider.link)}
+                  className='clickable'
+                >
                   <Image
-                    src={image.image}
-                    alt='Banner'
+                    src={`${URLS.IMAGE_URL}${slider.image}`}
+                    alt={slider.button_text}
                     width={0}
                     height={0}
                     sizes='100vw'
                     priority={true}
-                    className='clickable'
                     style={{width: '100%', height: 'auto', borderRadius: 10}}
                   />
-                </Link>
+                </div>
               </SwiperSlide>
             );
           })}
@@ -187,7 +346,7 @@ export const Home: React.FC<Props> = ({courses, categories}) => {
             gap: 10,
           }}
         >
-          {carousel.map((_, index) => {
+          {sliders.map((_, index) => {
             return (
               <div
                 key={_.id}
@@ -209,11 +368,13 @@ export const Home: React.FC<Props> = ({courses, categories}) => {
   };
 
   const renderCategories = () => {
+    if (!categories.length) return null;
+    
     return (
       <section style={{marginBottom: 30}}>
         <div className='container'>
           <components.BlockHeading
-            title='Categories'
+            title='Workshop Categories'
             href={Routes.CATEGORY_GRID}
             containerStyle={{marginBottom: 7}}
           />
@@ -226,10 +387,12 @@ export const Home: React.FC<Props> = ({courses, categories}) => {
           style={{padding: '0 20px'}}
         >
           {categories.map((category, index) => {
+            const gradientIndex = index % categoryGradients.length;
+            
             return (
               <SwiperSlide key={category.id} style={{width: 'auto'}}>
-                <Link
-                  href={Routes.CATEGORY_LIST}
+                <div
+                  onClick={() => handleCategoryClick(category.id)}
                   style={{
                     height: 89,
                     display: 'flex',
@@ -237,22 +400,53 @@ export const Home: React.FC<Props> = ({courses, categories}) => {
                     borderRadius: 10,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
-                    backgroundImage: `url(${category.image})`,
+                    backgroundImage: categoryGradients[gradientIndex],
+                    cursor: 'pointer',
+                    position: 'relative',
+                    overflow: 'hidden',
                   }}
                   className='clickable'
                 >
-                  <span
+                  <div
                     style={{
-                      fontSize: 14,
-                      ...theme.fonts.Lato,
-                      fontWeight: 700,
-                      lineHeight: 1.5,
-                      color: theme.colors.white,
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      backgroundImage: 'url("https://ipnacademy.in/new_assets/img/ipn/ipn.png")',
+                      backgroundSize: 'contain',
+                      backgroundPosition: 'center',
+                      backgroundRepeat: 'no-repeat',
+                      opacity: 0.05,
+                      zIndex: 0,
                     }}
-                  >
-                    {category.name}
-                  </span>
-                </Link>
+                  />
+                  <div style={{zIndex: 1}}>
+                    <span
+                      style={{
+                        fontSize: 14,
+                        ...theme.fonts.Lato,
+                        fontWeight: 700,
+                        lineHeight: 1.5,
+                        color: theme.colors.white,
+                        display: 'block',
+                      }}
+                    >
+                      {category.name || 'Unnamed Category'}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: 12,
+                        ...theme.fonts.Lato,
+                        color: theme.colors.white,
+                        opacity: 0.8,
+                      }}
+                    >
+                      {category.workshop_count || 0} Workshops
+                    </span>
+                  </div>
+                </div>
               </SwiperSlide>
             );
           })}
@@ -262,41 +456,78 @@ export const Home: React.FC<Props> = ({courses, categories}) => {
   };
 
   const renderTopRated = () => {
-    if (!courses.length) return null;
+    if (!liveWorkshops.length) return null;
     return (
       <section style={{paddingBottom: 30}}>
         <div className='container'>
           <components.BlockHeading
-            title='Top rated'
-            href={Routes.CATEGORY_LIST}
+            title='Live Workshops'
+            href='live-workshops'
             containerStyle={{marginBottom: 7}}
           />
         </div>
 
         <ul style={{display: 'flex', flexDirection: 'column', gap: 10}}>
-          {courses.map((course, index, array) => {
+          {liveWorkshops.map((workshop, index, array) => {
             const isLast = index === array.length - 1;
+            const courseData = {
+              id: workshop.id,
+              name: workshop.name,
+              image: workshop.image,
+              start_date: workshop.start_date,
+              duration: workshop.duration,
+              price: workshop.price,
+              price_2: workshop.price_2,
+              cut_price: workshop.cut_price,
+              description: workshop.description,
+              trainer: {
+                name: workshop.trainer_name,
+                designation: workshop.trainer_designation,
+                image: workshop.trainer_image,
+                description: workshop.trainer_description
+              }
+            };
             return (
               <elements.CourseCard
-                key={course.id}
-                course={course}
+                key={workshop.id}
+                course={courseData}
                 isLast={isLast}
                 section='top rated'
               />
             );
           })}
         </ul>
+        <div style={{padding: '0 20px', marginTop: 15}}>
+          <Link
+            href="/live-workshops"
+            style={{
+              display: 'block',
+              width: '100%',
+              padding: '12px 0',
+              textAlign: 'center',
+              borderRadius: 10,
+              backgroundColor: theme.colors.mainColor,
+              color: theme.colors.white,
+              ...theme.fonts.Lato_700Bold,
+              fontSize: 14,
+            }}
+          >
+            View All Workshops
+          </Link>
+        </div>
       </section>
     );
   };
 
   const renderPopular = () => {
+    if (!popularWorkshops.length) return null;
+    
     return (
       <section style={{paddingBottom: 30}}>
         <div className='container'>
           <components.BlockHeading
-            title='Popular'
-            href={Routes.CATEGORY_LIST}
+            title='Popular Workshops'
+            href='/popular-workshops'
             containerStyle={{marginBottom: 7}}
           />
         </div>
@@ -307,10 +538,27 @@ export const Home: React.FC<Props> = ({courses, categories}) => {
           onSwiper={(swiper) => {}}
           style={{padding: '0 20px'}}
         >
-          {courses.map((course, index) => {
+          {popularWorkshops.map((workshop, index) => {
+            const courseData = {
+              id: workshop.id,
+              name: workshop.name,
+              image: workshop.image,
+              start_date: workshop.start_date,
+              duration: workshop.duration,
+              price: workshop.price,
+              price_2: workshop.price_2,
+              cut_price: workshop.cut_price,
+              description: workshop.description,
+              trainer: {
+                name: workshop.trainer_name,
+                designation: workshop.trainer_designation,
+                image: workshop.trainer_image,
+                description: workshop.trainer_description
+              }
+            };
             return (
-              <SwiperSlide key={index} style={{width: 'auto'}}>
-                <items.PopularItem course={course} />
+              <SwiperSlide key={workshop.id} style={{width: 'auto'}}>
+                <items.PopularItem course={courseData} />
               </SwiperSlide>
             );
           })}

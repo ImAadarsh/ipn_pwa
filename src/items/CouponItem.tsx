@@ -54,7 +54,7 @@ export const CouponItem: React.FC<Props> = ({coupon}) => {
             color: theme.colors.mainColor,
           }}
         >
-          %
+          ₹
         </span>
         <span
           style={{

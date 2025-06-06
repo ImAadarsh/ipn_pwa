@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 
 import {text} from '../../text';
 import {URLS} from '../../config';
@@ -10,6 +10,21 @@ import {items} from '../../items';
 import {Routes} from '../../routes';
 import {theme} from '../../constants';
 import {components} from '../../components';
+
+interface User {
+  id: number;
+  name: string | null;
+  email: string | null;
+  mobile: string;
+  profile: string;
+  designation: string | null;
+  institute_name: string | null;
+  city: string | null;
+  user_type: string;
+  membership: number;
+  school_id: number | null;
+  sessionToken: string;
+}
 
 const HeartSvg: React.FC = () => {
   return (
@@ -117,9 +132,22 @@ const LogOutSvg: React.FC = () => {
 };
 
 export const Profile: React.FC = () => {
+  const [user, setUser] = useState<User | null>(null);
+
   useEffect(() => {
     document.body.style.backgroundColor = theme.colors.white;
+    
+    // Load user data from localStorage
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
   }, []);
+
+  const handleSignOut = () => {
+    localStorage.removeItem('user');
+    localStorage.removeItem('sessionToken');
+  };
 
   const renderBackground = () => {
     return <components.Background version={1} />;
@@ -130,6 +158,10 @@ export const Profile: React.FC = () => {
   };
 
   const renderContent = () => {
+    if (!user) {
+      return null;
+    }
+
     return (
       <main
         className='scrollable'
@@ -156,17 +188,16 @@ export const Profile: React.FC = () => {
               className='center clickable'
             >
               <Image
-                src={`${URLS.MAIN_URL}/assets/users/01.png`}
+                src={user.profile ? `${URLS.IMAGE_URL}${user.profile}` : `${URLS.IMAGE_URL}public/img/workshop/oqDdQPGw3UZnIlmNZojNfTvHHVA9KHjO1OqDHJE6.png`}
                 alt='User'
-                width={0}
-                height={0}
-                sizes='100vw'
-                priority={true}
+                width={120}
+                height={120}
                 style={{
                   width: '100%',
                   height: 'auto',
                   margin: '0 auto',
                   borderRadius: '50%',
+                  objectFit: 'cover'
                 }}
               />
               <div style={{position: 'absolute', bottom: -10, right: 0}}>
@@ -175,7 +206,7 @@ export const Profile: React.FC = () => {
             </div>
           </Link>
 
-          <text.H2 style={{textAlign: 'center'}}>Kristin Watson</text.H2>
+          <text.H2 style={{textAlign: 'center'}}>{user.name || 'User'}</text.H2>
           <span
             style={{
               textAlign: 'center',
@@ -186,7 +217,7 @@ export const Profile: React.FC = () => {
               color: theme.colors.bodyTextColor,
             }}
           >
-            kristinwatson@mail.com
+            {user.email || user.mobile}
           </span>
         </section>
 
@@ -218,11 +249,13 @@ export const Profile: React.FC = () => {
               href={Routes.PRIVACY_POLICY}
               icon={<DocumentSvg />}
             />
-            <items.ProfileItem
-              label='Sign out'
-              href={Routes.SIGN_IN}
-              icon={<LogOutSvg />}
-            />
+            <Link href={Routes.SIGN_IN} onClick={handleSignOut}>
+              <items.ProfileItem
+                label='Sign out'
+                href={Routes.SIGN_IN}
+                icon={<LogOutSvg />}
+              />
+            </Link>
           </div>
         </section>
       </main>

@@ -6,6 +6,7 @@ import {svg} from '../svg';
 import {text} from '../text';
 import {Routes} from '../routes';
 import {theme} from '../constants';
+import {URLS} from '../config';
 import type {CourseType} from '../types';
 import {course as elements} from '../course';
 
@@ -19,7 +20,7 @@ export const PopularItem: React.FC<Props> = ({course}) => {
       href={Routes.COURSE_DETAILS.replace(':id', String(course.id))}
       key={course.id}
       style={{
-        width: 230,
+        width: 200,
         cursor: 'pointer',
         userSelect: 'none',
         borderRadius: 10,
@@ -32,8 +33,8 @@ export const PopularItem: React.FC<Props> = ({course}) => {
         style={{
           position: 'relative',
           width: '100%',
-          height: 120,
-          marginBottom: 10,
+          height: 100,
+          marginBottom: 8,
         }}
       >
         <Image
@@ -41,7 +42,7 @@ export const PopularItem: React.FC<Props> = ({course}) => {
           height={0}
           sizes='100vw'
           priority={true}
-          src={course.bigPreview}
+          src={`${URLS.IMAGE_URL}${course.image}`}
           alt={course.name}
           style={{
             width: '100%',
@@ -49,6 +50,7 @@ export const PopularItem: React.FC<Props> = ({course}) => {
             position: 'absolute',
             borderRadius: 10,
             inset: 0,
+            objectFit: 'cover',
           }}
         />
         <elements.CourseRating
@@ -77,14 +79,12 @@ export const PopularItem: React.FC<Props> = ({course}) => {
           <svg.BtnSmallSvg />
         </div>
         <div>
-          <elements.CourseName
-            course={course}
-            numberOfLines={1}
-            shortName={true}
-          />
-          <text.T16 style={{color: theme.colors.secondaryTextColor}}>
-            London Universiry
-          </text.T16>
+          <text.T14 style={{fontWeight: 600, marginBottom: 2}} numberOfLines={1}>
+            {course.name}
+          </text.T14>
+          <text.T12 style={{color: theme.colors.secondaryTextColor}}>
+            {course.trainer?.name || 'Trainer'}
+          </text.T12>
         </div>
       </div>
     </Link>

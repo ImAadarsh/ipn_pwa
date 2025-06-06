@@ -36,7 +36,7 @@ export const CourseRating: React.FC<Props> = ({course, containerStyle}) => {
           color: theme.colors.bodyTextColor,
         }}
       >
-        {course.rating}
+        5
       </span>
     </div>
   );

@@ -1,37 +1,22 @@
-export type CourseType = {
+export interface CourseType {
   id: number;
   name: string;
-  price: number;
-  rating: number;
   image: string;
-  images: string[];
-  sizes: string[];
-  size: string;
-  colors: string[];
-  color: string;
-  threeDPreview: string;
-  bigPreview: string;
-  innerPreview: string;
-  author: string;
-  authorImage: string;
-  position: string;
+  preview_90x90?: string;
+  start_date: string;
   duration: string;
-  shortName: string;
+  price: number;
+  price_2: number;
+  cut_price: number | null;
   description: string;
-  categories: string;
-  isBestseller: boolean;
-  isFeatured: boolean;
-  is_out_of_stock: boolean;
-  oldPrice?: number;
-  quantity?: number;
-  types: string[];
-  isNew: boolean;
-  isTop: boolean;
-  audience: string[];
-  promotion: string;
-  tags: string[];
-  category: string;
-  oldPrices: number;
-  categoryId: number;
-  preview_90x90: string;
-};
+  trainer: {
+    name: string;
+    designation: string;
+    image: string;
+    description: string;
+  };
+  rating?: number;
+  images?: string[];
+  sizes?: string[];
+  size?: string;
+}

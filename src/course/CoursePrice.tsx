@@ -15,7 +15,7 @@ type Props = {
 export const CoursePrice: React.FC<Props> = ({containerStyle, course}) => {
   return (
     <div style={{...utils.rowCenter(), ...containerStyle}}>
-      {course.oldPrice && (
+      {course.cut_price && (
         <span
           style={{
             marginRight: 6,
@@ -27,11 +27,11 @@ export const CoursePrice: React.FC<Props> = ({containerStyle, course}) => {
             marginTop: 3,
           }}
         >
-          ${course.oldPrice.toFixed(2)}
+          ₹{course.cut_price.toFixed(2)}
         </span>
       )}
       <text.T16 style={{color: theme.colors.mainColor}}>
-        ${course.price.toFixed(2)}
+        ₹{course.price.toFixed(2)}
       </text.T16>
     </div>
   );

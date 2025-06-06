@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -11,11 +11,45 @@ import {components} from '../../components';
 
 import type {CategoryType} from '../../types';
 
-type Props = {
-  categories: CategoryType[];
-};
+interface Category {
+  id: number;
+  name?: string;
+  workshop_count?: number;
+}
 
-export const CategoryGrid: React.FC<Props> = ({categories}) => {
+const categoryGradients = [
+  `linear-gradient(45deg, ${theme.colors.mainColor}, ${theme.colors.accentColor})`,
+  `linear-gradient(45deg, ${theme.colors.persianRose}, ${theme.colors.mainOrange})`,
+  `linear-gradient(45deg, ${theme.colors.coralRed}, ${theme.colors.mainColor})`,
+  `linear-gradient(45deg, ${theme.colors.mainOrange}, ${theme.colors.persianRose})`,
+  `linear-gradient(45deg, ${theme.colors.accentColor}, ${theme.colors.coralRed})`,
+];
+
+export const CategoryGrid: React.FC = () => {
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch('/api/categories/list');
+      const data = await response.json();
+      
+      if (data.success) {
+        setCategories(data.categories);
+      } else {
+        console.error('Failed to fetch categories:', data.message);
+      }
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const renderBackground = () => {
     return <components.Background version={1} />;
   };
@@ -25,6 +59,22 @@ export const CategoryGrid: React.FC<Props> = ({categories}) => {
   };
 
   const renderContent = () => {
+    if (loading) {
+      return (
+        <div style={{padding: 20, textAlign: 'center'}}>
+          <text.T14>Loading categories...</text.T14>
+        </div>
+      );
+    }
+
+    if (!categories.length) {
+      return (
+        <div style={{padding: 20, textAlign: 'center'}}>
+          <text.T14>No categories found</text.T14>
+        </div>
+      );
+    }
+
     const blockStyle: React.CSSProperties = {
       display: 'flex',
       flexDirection: 'column',
@@ -34,6 +84,8 @@ export const CategoryGrid: React.FC<Props> = ({categories}) => {
       userSelect: 'none',
       padding: '30px 10px',
       position: 'relative',
+      borderRadius: 10,
+      overflow: 'hidden',
     };
 
     return (
@@ -49,46 +101,51 @@ export const CategoryGrid: React.FC<Props> = ({categories}) => {
           }}
         >
           <div style={{width: 'calc(50% - 7.5px)'}}>
-            {categories.slice(0, 3).map((category: any, index, array) => {
+            {categories.slice(0, 3).map((category, index, array) => {
               const isLast = index === array.length - 1;
+              const gradientIndex = index % categoryGradients.length;
               return (
                 <Link
                   key={category.id}
-                  href={Routes.CATEGORY_LIST.replace(':id', category.id)}
-                  style={{...blockStyle, marginBottom: isLast ? 0 : 15}}
+                  href={Routes.CATEGORY_LIST.replace(':id', String(category.id))}
+                  style={{
+                    ...blockStyle,
+                    marginBottom: isLast ? 0 : 15,
+                    backgroundImage: categoryGradients[gradientIndex],
+                  }}
                 >
-                  <Image
-                    width={0}
-                    height={0}
-                    sizes='100vw'
-                    priority={true}
-                    src={category.image}
-                    alt={category.name}
+                  <div
                     style={{
-                      height: '100%',
-                      width: '100%',
-                      objectFit: 'cover',
-                      borderRadius: 10,
                       position: 'absolute',
-                      inset: 0,
-                      zIndex: -1,
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      backgroundImage: 'url("https://ipnacademy.in/new_assets/img/ipn/ipn.png")',
+                      backgroundSize: 'contain',
+                      backgroundPosition: 'center',
+                      backgroundRepeat: 'no-repeat',
+                      opacity: 0.05,
+                      zIndex: 0,
                     }}
                   />
                   <text.H2
                     style={{
                       color: theme.colors.white,
                       textTransform: 'capitalize',
+                      zIndex: 1,
                     }}
                   >
-                    {category.name}
+                    {category.name || 'Unnamed Category'}
                   </text.H2>
                   <text.T14
                     style={{
                       color: theme.colors.white,
                       ...theme.fonts.Lato_700Bold,
+                      zIndex: 1,
                     }}
                   >
-                    {category.quantity} Courses
+                    {category.workshop_count || 0} Workshops
                   </text.T14>
                 </Link>
               );
@@ -97,8 +154,9 @@ export const CategoryGrid: React.FC<Props> = ({categories}) => {
           <div style={{width: 'calc(50% - 7.5px)'}}>
             {categories
               .slice(3, 6)
-              .map((category: CategoryType, index, array) => {
+              .map((category, index, array) => {
                 const isLast = index === array.length - 1;
+                const gradientIndex = (index + 3) % categoryGradients.length;
                 return (
                   <Link
                     href={Routes.CATEGORY_LIST.replace(
@@ -110,39 +168,41 @@ export const CategoryGrid: React.FC<Props> = ({categories}) => {
                       ...blockStyle,
                       height: 210,
                       marginBottom: isLast ? 0 : 15,
+                      backgroundImage: categoryGradients[gradientIndex],
                     }}
                   >
-                    <Image
-                      width={0}
-                      height={0}
-                      priority={true}
-                      src={category.image}
-                      alt={'Category'}
+                    <div
                       style={{
-                        height: '100%',
-                        width: '100%',
-                        objectFit: 'cover',
-                        borderRadius: 10,
                         position: 'absolute',
-                        inset: 0,
-                        zIndex: -1,
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundImage: 'url("https://ipnacademy.in/new_assets/img/ipn/ipn.png")',
+                        backgroundSize: 'contain',
+                        backgroundPosition: 'center',
+                        backgroundRepeat: 'no-repeat',
+                        opacity: 0.05,
+                        zIndex: 0,
                       }}
                     />
                     <text.H2
                       style={{
                         color: theme.colors.white,
                         textTransform: 'capitalize',
+                        zIndex: 1,
                       }}
                     >
-                      {category.name}
+                      {category.name || 'Unnamed Category'}
                     </text.H2>
                     <text.T14
                       style={{
                         color: theme.colors.white,
                         ...theme.fonts.Lato_700Bold,
+                        zIndex: 1,
                       }}
                     >
-                      {category.quantity} Courses
+                      {category.workshop_count || 0} Workshops
                     </text.T14>
                   </Link>
                 );

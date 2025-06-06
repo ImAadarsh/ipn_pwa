@@ -9,6 +9,7 @@ import {text} from '../text';
 import {utils} from '../utils';
 import {Routes} from '../routes';
 import {theme} from '../constants';
+import {URLS} from '../config';
 import {CourseType} from '../types';
 import {course as elements} from '../course';
 
@@ -45,25 +46,24 @@ export const CourseCard: React.FC<Props> = ({
       >
         <div
           style={{
-            minWidth: 90,
-            minHeight: 90,
+            width: 295,
+            height: 96,
             marginRight: 12,
             position: 'relative',
           }}
         >
           <Image
-            width={0}
-            height={0}
+            width={675}
+            height={196}
             sizes='100vw'
             alt='course'
             priority={true}
-            src={course.preview_90x90}
+            src={`${URLS.IMAGE_URL}${course.image}`}
             style={{
               width: '100%',
               height: '100%',
               borderRadius: 10,
-              position: 'absolute',
-              inset: 0,
+              objectFit: 'cover',
             }}
           />
           <elements.CourseRating
@@ -91,9 +91,9 @@ export const CourseCard: React.FC<Props> = ({
                 color: theme.colors.secondaryTextColor,
               }}
             >
-              {course.duration}
+              {course.trainer.name}
             </text.T14>
-            <elements.CoursePrice course={course} />
+            {course.price >= 0 && <elements.CoursePrice course={course} />}
           </div>
           <elements.CourseInWishlist
             course={course}
@@ -125,25 +125,24 @@ export const CourseCard: React.FC<Props> = ({
       >
         <div
           style={{
-            minWidth: 90,
-            minHeight: 90,
+            width: 375,
+            height: 196,
             marginRight: 12,
             position: 'relative',
           }}
         >
           <Image
-            width={0}
-            height={0}
+            width={375}
+            height={196}
             sizes='100vw'
             alt='course'
             priority={true}
-            src={course.preview_90x90}
+            src={`${URLS.IMAGE_URL}${course.image}`}
             style={{
               width: '100%',
               height: '100%',
               borderRadius: 10,
-              position: 'absolute',
-              inset: 0,
+              objectFit: 'cover',
             }}
           />
           <elements.CourseRating
@@ -165,9 +164,9 @@ export const CourseCard: React.FC<Props> = ({
           <div style={{...utils.rowCenter()}}>
             <svg.ClockSvg />
             <text.T14 style={{marginLeft: 6, marginRight: 'auto'}}>
-              {course.duration}
+              {course.trainer.name}
             </text.T14>
-            <elements.CoursePrice course={course} />
+            {course.price >= 0 && <elements.CoursePrice course={course} />}
           </div>
           <elements.CourseInWishlist
             course={course}
@@ -194,18 +193,23 @@ export const CourseCard: React.FC<Props> = ({
         }}
       >
         <Link
-          style={{height: 96, position: 'relative', display: 'flex'}}
+          style={{
+            width: 375,
+            height: 196,
+            position: 'relative',
+            display: 'flex'
+          }}
           href={Routes.COURSE_DETAILS.replace(':id', String(course.id))}
         >
           <Image
-            width={0}
-            height={0}
+            width={375}
+            height={196}
             priority={true}
-            src={course.preview_90x90}
+            src={`${URLS.IMAGE_URL}${course.image}`}
             alt='course'
             style={{
-              height: '100%',
               width: '100%',
+              height: '100%',
               borderTopLeftRadius: 10,
               borderTopRightRadius: 10,
               objectFit: 'cover',

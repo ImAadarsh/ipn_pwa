@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
-import mysql from 'mysql2/promise';
+import mysql, { RowDataPacket } from 'mysql2/promise';
 
+// Database configuration
 const dbConfig = {
   host: '82.180.142.204',
   user: 'u954141192_ipnacademy',
@@ -8,57 +9,142 @@ const dbConfig = {
   database: 'u954141192_ipnacademy'
 };
 
+interface User extends RowDataPacket {
+  id: number;
+  name: string | null;
+  email: string | null;
+  mobile: string;
+  profile: string;
+  oauth_uid: string | null;
+  designation: string | null;
+  institute_name: string | null;
+  city: string | null;
+  user_type: string;
+  email_verified_at: Date | null;
+  country_code: string | null;
+  token: string | null;
+  otp: string | null;
+  password: string | null;
+  remember_token: string | null;
+  membership: number;
+  school_id: number | null;
+  created_at: Date;
+  updated_at: Date;
+}
+
 export async function POST(request: Request) {
   try {
-    const { userJsonUrl } = await request.json();
+    const { user_json_url } = await request.json();
+
+    if (!user_json_url) {
+      return NextResponse.json(
+        { success: false, message: 'Missing user_json_url' },
+        { status: 400 }
+      );
+    }
 
     // Fetch user data from phone.email
-    const response = await fetch(userJsonUrl);
+    const response = await fetch(user_json_url);
+    if (!response.ok) {
+      throw new Error('Failed to fetch user data from phone.email');
+    }
+
     const userData = await response.json();
+    console.log('Phone.email user data:', userData);
+
+    // Extract phone number and country code
+    const phoneNumber = userData.user_phone_number;
+    const countryCode = userData.user_country_code;
+    
+    if (!phoneNumber) {
+      return NextResponse.json(
+        { success: false, message: 'Phone number not found in verification data' },
+        { status: 400 }
+      );
+    }
 
     // Connect to database
     const connection = await mysql.createConnection(dbConfig);
 
-    // Check if user exists
-    const [existingUsers] = await connection.execute(
-      'SELECT * FROM users WHERE mobile = ?',
-      [userData.phone]
-    );
-
-    let userId;
-    if (Array.isArray(existingUsers) && existingUsers.length === 0) {
-      // Create new user
-      const [result] = await connection.execute(
-        'INSERT INTO users (mobile, name, email, created_at, updated_at) VALUES (?, ?, ?, NOW(), NOW())',
-        [userData.phone, userData.name || null, userData.email || null]
+    try {
+      // Check if user exists
+      const [users] = await connection.execute<User[]>(
+        'SELECT * FROM users WHERE mobile = ?',
+        [phoneNumber]
       );
-      userId = (result as any).insertId;
-    } else {
-      userId = (existingUsers as any)[0].id;
+
+      let userId: number;
+      let userDetails: User;
+
+      if (users.length === 0) {
+        // Create new user if doesn't exist
+        const [result] = await connection.execute(
+          'INSERT INTO users (mobile, country_code, created_at, updated_at) VALUES (?, ?, NOW(), NOW())',
+          [phoneNumber, countryCode]
+        );
+        userId = (result as any).insertId;
+
+        // Fetch the newly created user
+        const [newUsers] = await connection.execute<User[]>(
+          'SELECT * FROM users WHERE id = ?',
+          [userId]
+        );
+        userDetails = newUsers[0];
+      } else {
+        userDetails = users[0];
+        userId = users[0].id;
+      }
+
+      // Generate OTP
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      
+      // Store OTP in database
+      await connection.execute(
+        'UPDATE users SET otp = ? WHERE id = ?',
+        [otp, userId]
+      );
+
+      // Generate a session token
+      const sessionToken = Math.random().toString(36).substring(2) + Date.now().toString(36);
+      
+      // Update user's token
+      await connection.execute(
+        'UPDATE users SET token = ? WHERE id = ?',
+        [sessionToken, userId]
+      );
+
+      return NextResponse.json({
+        success: true,
+        message: 'Phone verification successful',
+        user: {
+          id: userDetails.id,
+          name: userDetails.name,
+          email: userDetails.email,
+          mobile: userDetails.mobile,
+          profile: userDetails.profile,
+          designation: userDetails.designation,
+          institute_name: userDetails.institute_name,
+          city: userDetails.city,
+          user_type: userDetails.user_type,
+          membership: userDetails.membership,
+          school_id: userDetails.school_id,
+          sessionToken
+        }
+      });
+
+    } finally {
+      // Always close the connection
+      await connection.end();
     }
-
-    // Generate session token
-    const token = Math.random().toString(36).substring(2);
-
-    // Update user token
-    await connection.execute(
-      'UPDATE users SET token = ?, updated_at = NOW() WHERE id = ?',
-      [token, userId]
-    );
-
-    await connection.end();
-
-    return NextResponse.json({
-      success: true,
-      token,
-      userId,
-      isNewUser: Array.isArray(existingUsers) && existingUsers.length === 0
-    });
 
   } catch (error) {
     console.error('Phone verification error:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to verify phone number' },
+      { 
+        success: false, 
+        message: error instanceof Error ? error.message : 'Phone verification failed',
+        details: error instanceof Error ? error.stack : undefined
+      },
       { status: 500 }
     );
   }

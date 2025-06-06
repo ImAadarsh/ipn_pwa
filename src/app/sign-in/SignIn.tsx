@@ -9,49 +9,94 @@ import {text} from '../../text';
 import {Routes} from '../../routes';
 import {theme} from '../../constants';
 import {components} from '../../components';
-import { PhoneEmailButton } from '../../components/PhoneEmailButton';
+
+// Add type definitions for phone.email
+declare global {
+  interface Window {
+    phoneEmailListener: ((userObj: { user_json_url: string }) => void) | null;
+  }
+}
+
+interface User {
+  id: number;
+  name: string | null;
+  email: string | null;
+  mobile: string;
+  profile: string;
+  designation: string | null;
+  institute_name: string | null;
+  city: string | null;
+  user_type: string;
+  membership: number;
+  school_id: number | null;
+  sessionToken: string;
+}
 
 export const SignIn: React.FC = () => {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [rememberMe, setRememberMe] = useState(false);
+  const [verificationStatus, setVerificationStatus] = useState<string>('');
+  const [isVerifying, setIsVerifying] = useState(false);
 
   useEffect(() => {
     document.body.style.backgroundColor = theme.colors.white;
-  }, []);
 
-  const handleVerificationSuccess = async (userJsonUrl: string) => {
-    try {
-      setIsLoading(true);
-      setError(null);
+    // Load the external script
+    const script = document.createElement('script');
+    script.src = "https://www.phone.email/sign_in_button_v1.js";
+    script.async = true;
+    document.querySelector('.pe_signin_button')?.appendChild(script);
 
-      const response = await fetch('/api/auth/verify-phone', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userJsonUrl }),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        // Store the token in localStorage or your preferred storage method
-        localStorage.setItem('authToken', data.token);
-        localStorage.setItem('userId', data.userId.toString());
+    // Define the listener function
+    const handlePhoneEmail = async (userObj: { user_json_url: string }) => {
+      try {
+        setIsVerifying(true);
+        setVerificationStatus('Verifying...');
         
-        // Redirect to home page
-        router.push(Routes.HOME);
-      } else {
-        setError('Failed to verify phone number. Please try again.');
+        // Call your API endpoint to verify the user
+        const response = await fetch('/api/auth/verify-phone', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ user_json_url: userObj.user_json_url }),
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+          // Store user details in localStorage
+          const user: User = data.user;
+          localStorage.setItem('user', JSON.stringify(user));
+          localStorage.setItem('sessionToken', user.sessionToken);
+          
+          // If remember me is checked, store for longer duration
+          if (rememberMe) {
+            localStorage.setItem('rememberMe', 'true');
+          }
+
+          setVerificationStatus('Verification successful!');
+          // Redirect to home page or dashboard
+          router.push(Routes.HOME);
+        } else {
+          setVerificationStatus(data.message || 'Verification failed. Please try again.');
+          console.error('Verification failed:', data);
+        }
+      } catch (error) {
+        console.error('Verification error:', error);
+        setVerificationStatus('An error occurred. Please try again.');
+      } finally {
+        setIsVerifying(false);
       }
-    } catch (err) {
-      setError('An error occurred. Please try again.');
-      console.error('Verification error:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    };
+
+    window.phoneEmailListener = handlePhoneEmail;
+
+    return () => {
+      // Cleanup the listener function when the component unmounts
+      window.phoneEmailListener = null;
+    };
+  }, [router, rememberMe]);
 
   const renderBackground = () => {
     return <components.Background version={1} />;
@@ -96,24 +141,58 @@ export const SignIn: React.FC = () => {
             </text.T18>
           </section>
 
-          {/* ERROR MESSAGE */}
-          {error && (
-            <section style={{ marginBottom: 20, color: 'red', textAlign: 'center' }}>
-              <text.T16>{error}</text.T16>
-            </section>
-          )}
-
-          {/* PHONE.EMAIL BUTTON */}
-          <section style={{ marginBottom: 20 }}>
-            <PhoneEmailButton onVerificationSuccess={handleVerificationSuccess} />
+          {/* PHONE VERIFICATION */}
+          <section style={{marginBottom: 20}}>
+            <div className="pe_signin_button" data-client-id="15695407177920574360"></div>
+            {verificationStatus && (
+              <text.T16 
+                style={{
+                  marginTop: 10, 
+                  textAlign: 'center', 
+                  color: verificationStatus.includes('successful') ? 'green' : 'red',
+                  opacity: isVerifying ? 0.7 : 1
+                }}
+              >
+                {verificationStatus}
+              </text.T16>
+            )}
           </section>
 
-          {/* LOADING INDICATOR */}
-          {isLoading && (
-            <section style={{ textAlign: 'center', marginBottom: 20 }}>
-              <text.T16>Verifying...</text.T16>
-            </section>
-          )}
+          {/* REMEMBER ME */}
+          <section
+            style={{
+              marginBottom: 30,
+              display: 'flex',
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+            }}
+          >
+            <div
+              style={{
+                gap: '10px',
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+              }}
+              className='clickable'
+              onClick={() => setRememberMe(!rememberMe)}
+            >
+              <div
+                style={{
+                  width: 16,
+                  height: 16,
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  borderRadius: 4,
+                  border: '1px solid #333333',
+                }}
+              >
+                {rememberMe && <svg.InputCheckSvg />}
+              </div>
+              <text.T16>Remember me</text.T16>
+            </div>
+          </section>
 
           {/* REGISTER */}
           <section style={{marginBottom: 38}}>
@@ -126,28 +205,6 @@ export const SignIn: React.FC = () => {
                 Create Free Account.
               </Link>
             </text.T16>
-          </section>
-
-          {/* SOCIALS */}
-          <section className='container' style={{marginBottom: 30}}>
-            <ul
-              style={{
-                display: 'flex',
-                flexDirection: 'row',
-                gap: 10,
-                justifyContent: 'center',
-              }}
-            >
-              <li className='clickable'>
-                <components.Facebook />
-              </li>
-              <li className='clickable'>
-                <components.Twitter />
-              </li>
-              <li className='clickable'>
-                <components.Google />
-              </li>
-            </ul>
           </section>
         </section>
       </main>
