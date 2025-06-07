@@ -3,7 +3,6 @@
 import React, {useEffect, useState} from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import {useRouter} from 'next/navigation';
 import Script from 'next/script';
 
 import {svg} from '../svg';
@@ -15,20 +14,20 @@ import {URLS} from '../config';
 import {CourseType} from '../types';
 import {course as elements} from '../course';
 
-type Props = {
-  isLast?: boolean;
+interface Props {
   course: CourseType;
-  status?: 'ongoing' | 'completed';
-  section: 'top rated' | 'category list' | 'my courses';
+  isLast?: boolean;
+  section?: string;
+  status?: string;
   orderId?: string;
-  workshopId?: number;
+  workshopId?: string | number;
   startDate?: string;
   meetingId?: string;
   passcode?: string;
-  userId?: number;
+  userId?: string | number;
   userName?: string;
   userEmail?: string;
-};
+}
 
 interface User {
   id: number;
@@ -56,8 +55,8 @@ interface RecordingResponse {
 
 export const CourseCard: React.FC<Props> = ({
   course,
-  section,
   isLast,
+  section,
   status,
   orderId,
   workshopId,
@@ -68,7 +67,6 @@ export const CourseCard: React.FC<Props> = ({
   userName,
   userEmail,
 }) => {
-  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [showAccessAlert, setShowAccessAlert] = useState<string | null>(null);
   const [showVideoModal, setShowVideoModal] = useState(false);
