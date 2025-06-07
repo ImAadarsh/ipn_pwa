@@ -3,7 +3,7 @@
 import React from 'react';
 import {useRouter, usePathname} from 'next/navigation';
 
-import {svg} from '../svg';
+// import {svg} from '../svg'; // Removed as we're using image files
 import {theme} from '../constants';
 import {TabScreens, Routes} from '../routes';
 
@@ -14,25 +14,25 @@ export const BottomTabBar: React.FC = () => {
     {
       id: 1,
       name: TabScreens.HOME,
-      icon: svg.HomeTabSvg,
+      imageSrc: '/icons/home.png', // Path to the new home icon
       route: Routes.HOME,
     },
     {
       id: 2,
       name: TabScreens.SEARCH,
-      icon: svg.SearchTabSvg,
+      imageSrc: '/icons/search.png', // Path to the new search icon
       route: Routes.SEARCH,
     },
     {
       id: 3,
       name: TabScreens.MY_COURSES,
-      icon: svg.MyCourses,
+      imageSrc: '/icons/workshop.png', // Path to the new workshop icon (for My Courses)
       route: Routes.MY_COURSES,
     },
     {
       id: 5,
       name: TabScreens.PROFILE,
-      icon: svg.ProfileTabSvg,
+      imageSrc: '/icons/profile.png', // Path to the new profile icon
       route: Routes.PROFILE,
     },
   ];
@@ -57,6 +57,7 @@ export const BottomTabBar: React.FC = () => {
           }}
         >
           {tabs.map((tab) => {
+            const isActive = pathname === tab.route;
             return (
               <li
                 key={tab.id}
@@ -74,13 +75,15 @@ export const BottomTabBar: React.FC = () => {
                   router.push(tab.route);
                 }}
               >
-                <tab.icon
-                  key={tab.id}
-                  color={
-                    pathname === tab.route
-                      ? theme.colors.mainColor
-                      : theme.colors.secondaryTextColor
-                  }
+                <img 
+                  src={tab.imageSrc}
+                  alt={tab.name}
+                  style={{
+                    width: isActive ? 30 : 24, // Increased size when active
+                    height: isActive ? 30 : 24, // Increased size when active
+                    opacity: isActive ? 1 : 0.6,
+                    transition: 'all 0.3s ease-in-out' // Smooth transition
+                  }}
                 />
                 <span
                   style={{
@@ -90,10 +93,9 @@ export const BottomTabBar: React.FC = () => {
                     textTransform: 'uppercase',
                     ...theme.fonts.League_Spartan,
                     fontWeight: 600,
-                    color:
-                      pathname === tab.route
-                        ? theme.colors.mainColor
-                        : theme.colors.secondaryTextColor,
+                    color: isActive 
+                      ? theme.colors.mainColor
+                      : theme.colors.secondaryTextColor,
                   }}
                 >
                   {tab.name}
