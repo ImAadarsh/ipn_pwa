@@ -13,24 +13,24 @@ import {components} from '../components';
 const onboarding = [
   {
     id: 1,
-    title: 'Discover useful resources',
+    title: 'Welcome to IPN Academy',
     image: `${URLS.MAIN_URL}/assets/onboarding/01_02.png`,
     description:
-      'E-Learning is for everyone. \n Discover useful resources and \n improve your skills.',
+      'IPN Academy is your gateway to excellence. \n Discover cutting-edge resources and \n elevate your professional skills.',
   },
   {
     id: 2,
-    title: 'New profession',
+    title: 'Transform Your Career',
     image: `${URLS.MAIN_URL}/assets/onboarding/02_02.png`,
     description:
-      'With us you can get a new profession, learn \n skills for career development',
+      'With IPN Academy, unlock new career opportunities. \n Master in-demand skills and \n accelerate your professional growth.',
   },
   {
     id: 3,
-    title: 'Move forward',
+    title: 'Advance with Confidence',
     image: `${URLS.MAIN_URL}/assets/onboarding/03_02.png`,
     description:
-      'We have created a comfortable learning \n environment for you to move forward',
+      'IPN Academy provides a dynamic learning environment. \n Equip yourself with the tools and knowledge \n to move forward with confidence.',
   },
 ];
 
