@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Swiper, SwiperSlide} from 'swiper/react';
 
 import {svg} from '../../svg';
@@ -10,14 +10,12 @@ import {text} from '../../text';
 import {items} from '../../items';
 import {Routes} from '../../routes';
 import {theme} from '../../constants';
+import {URLS} from '../../config';
 import {components} from '../../components';
 import {course as elements} from '../../course';
+import {LoadingSkeleton} from '../../components/LoadingSkeleton';
 
 import type {CourseType} from '../../types';
-
-type Props = {
-  courses: CourseType[];
-};
 
 const SearchSvg: React.FC = () => {
   return (
@@ -69,92 +67,214 @@ const tags = [
   },
 ];
 
-export const Search: React.FC<Props> = ({courses}) => {
+const months = [
+  {value: '', label: 'All Months'},
+  {value: '1', label: 'January'},
+  {value: '2', label: 'February'},
+  {value: '3', label: 'March'},
+  {value: '4', label: 'April'},
+  {value: '5', label: 'May'},
+  {value: '6', label: 'June'},
+  {value: '7', label: 'July'},
+  {value: '8', label: 'August'},
+  {value: '9', label: 'September'},
+  {value: '10', label: 'October'},
+  {value: '11', label: 'November'},
+  {value: '12', label: 'December'},
+];
+
+export const Search: React.FC = () => {
+  const [popularCourses, setPopularCourses] = useState<CourseType[]>([]);
+  const [liveCourses, setLiveCourses] = useState<CourseType[]>([]);
+  const [upcomingWorkshops, setUpcomingWorkshops] = useState<{name: string, id: number}[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedMonth, setSelectedMonth] = useState('');
+  const [searchResults, setSearchResults] = useState<CourseType[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+
   useEffect(() => {
     document.body.style.backgroundColor = theme.colors.white;
+    fetchAllData();
   }, []);
+
+  const fetchAllData = async () => {
+    try {
+      setLoading(true);
+      const [popularRes, liveRes, upcomingRes] = await Promise.all([
+        fetch('/api/workshops/popular?type=1'),
+        fetch('/api/workshops/popular?type=0'),
+        fetch('/api/workshops/upcoming')
+      ]);
+
+      const [popularData, liveData, upcomingData] = await Promise.all([
+        popularRes.json(),
+        liveRes.json(),
+        upcomingRes.json()
+      ]);
+
+      if (popularData.success) {
+        setPopularCourses(popularData.workshops.map((w: any) => ({
+          ...w,
+          image: `${URLS.IMAGE_URL}${w.image}`
+        })));
+      }
+
+      if (liveData.success) {
+        setLiveCourses(liveData.workshops.map((w: any) => ({
+          ...w,
+          image: `${w.image}`,
+          trainer: {
+            name: w.trainer_name,
+            designation: w.trainer_designation,
+            image: w.trainer_image,
+            description: w.trainer_description,
+          }
+        })));
+      }
+
+      if (upcomingData.success) {
+        setUpcomingWorkshops(upcomingData.workshops);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearch = async () => {
+    if (!searchQuery && !selectedMonth) {
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const params = new URLSearchParams();
+      if (searchQuery) params.append('query', searchQuery);
+      if (selectedMonth) params.append('month', selectedMonth);
+
+      const response = await fetch(`/api/workshops/search?${params.toString()}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        console.log('Search API response workshops:', data.workshops);
+        setSearchResults(data.workshops.map((w: any) => ({
+          ...w,
+          image: `${w.image}`,
+          trainer: {
+            name: w.trainer_name,
+            designation: w.trainer_designation,
+            image: w.trainer_image,
+            description: w.trainer_description,
+          }
+        })));
+      } else {
+        console.error('Failed to search workshops:', data.message);
+      }
+    } catch (error) {
+      console.error('Error searching workshops:', error);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      handleSearch();
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery, selectedMonth]);
 
   const renderSearch = () => {
     return (
       <section className='container' style={{marginTop: 10, marginBottom: 30}}>
-        <Link
-          href={Routes.CATEGORY_LIST}
+        <div
           style={{
-            width: '100%',
-            height: 42,
-            borderRadius: 5,
             display: 'flex',
-            gap: 8,
-            flexDirection: 'row',
-            alignItems: 'center',
-            padding: '0 16px',
-            background: `linear-gradient(90deg, rgba(246, 189, 229, 0.5) 0%, rgba(174, 183, 248, 0.5) 100%)`,
+            flexDirection: 'column',
+            gap: 10,
+            padding: 20,
+            borderRadius: 10,
+            border: `1px solid ${theme.colors.white}50`,
+            backgroundColor: `${theme.colors.white}50`,
+            boxShadow: '0px 4px 10px rgba(37, 73, 150, 0.05)',
           }}
         >
-          <SearchSvg />
-          <span
+          <div
             style={{
+              display: 'flex',
+              gap: 8,
+              flexDirection: 'row',
+              alignItems: 'center',
+              padding: '0 16px',
+              height: 42,
+              borderRadius: 5,
+              background: `linear-gradient(90deg, rgba(246, 189, 229, 0.5) 0%, rgba(174, 183, 248, 0.5) 100%)`,
+            }}
+          >
+            <SearchSvg />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search workshops, trainers, or descriptions..."
+              style={{
+                flex: 1,
+                border: 'none',
+                background: 'transparent',
+                outline: 'none',
+                ...theme.fonts.Lato,
+                fontSize: 14,
+                color: theme.colors.bodyTextColor,
+              }}
+            />
+          </div>
+          <select
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(e.target.value)}
+            style={{
+              height: 42,
+              borderRadius: 5,
+              padding: '0 16px',
+              border: `1px solid ${theme.colors.secondaryTextColor}`,
+              background: theme.colors.white,
               ...theme.fonts.Lato,
               fontSize: 14,
-              marginRight: 'auto',
               color: theme.colors.bodyTextColor,
             }}
           >
-            Search
-          </span>
-          <svg.FilterSvg />
-        </Link>
+            {months.map((month) => (
+              <option key={month.value} value={month.value}>
+                {month.label}
+              </option>
+            ))}
+          </select>
+        </div>
       </section>
     );
   };
 
-  const renderBackground = () => {
-    return <components.Background version={1} />;
-  };
+  const renderSearchResults = () => {
+    if (!isSearching && !searchResults.length) return null;
 
-  const renderNewCourses = () => {
+    if (isSearching) {
+      return <LoadingSkeleton />;
+    }
+
     return (
       <section style={{marginBottom: 30}}>
         <div className='container'>
           <components.BlockHeading
-            title='New courses'
-            href={Routes.CATEGORY_LIST}
+            title='Search Results'
             containerStyle={{marginBottom: 7}}
           />
         </div>
-        <Swiper
-          spaceBetween={16}
-          slidesPerView={'auto'}
-          onSlideChange={() => {}}
-          onSwiper={(swiper) => {}}
-          style={{padding: '0 20px'}}
-        >
-          {courses.map((course, index) => {
-            return (
-              <SwiperSlide key={index} style={{width: 'auto'}}>
-                <items.NewCourseItem index={index} course={course} />
-              </SwiperSlide>
-            );
-          })}
-        </Swiper>
-      </section>
-    );
-  };
-
-  const renderTopRated = () => {
-    if (!courses.length) return null;
-    return (
-      <section style={{paddingBottom: 30}}>
-        <div className='container'>
-          <components.BlockHeading
-            title='Top rated'
-            href={Routes.CATEGORY_LIST}
-            containerStyle={{marginBottom: 7}}
-          />
-        </div>
-
         <ul style={{display: 'flex', flexDirection: 'column', gap: 10}}>
-          {courses.map((course, index, array) => {
+          {searchResults.map((course, index, array) => {
             const isLast = index === array.length - 1;
             return (
               <elements.CourseCard
@@ -170,116 +290,107 @@ export const Search: React.FC<Props> = ({courses}) => {
     );
   };
 
-  const renderSpecialForYou = () => {
+  const renderBackground = () => {
+    return <components.Background version={1} />;
+  };
+
+  const renderPopularCourses = () => {
+    if (loading) return <LoadingSkeleton />;
+    if (isSearching || searchResults.length > 0) return null;
+    
     return (
-      <div style={{marginBottom: 30}}>
-        <components.BlockHeading
-          title='Specially for you'
-          href={Routes.CATEGORY_LIST}
-          containerStyle={{marginBottom: 7, padding: '0 20px'}}
-        />
+      <section style={{marginBottom: 30}}>
+        <div className='container'>
+          <components.BlockHeading
+            title='Recent Popular Workshops'
+            containerStyle={{marginBottom: 7}}
+          />
+        </div>
         <Swiper
           spaceBetween={16}
           slidesPerView={'auto'}
+          onSlideChange={() => {}}
+          onSwiper={(swiper) => {}}
           style={{padding: '0 20px'}}
-          pagination={{clickable: true}}
         >
-          {courses.slice(0, 3).map((course: CourseType, index) => {
+          {popularCourses.map((course, index) => {
             return (
-              <SwiperSlide key={course.id} style={{width: 'auto'}}>
-                <Link
-                  href={Routes.COURSE_DETAILS.replace(':id', String(course.id))}
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    width: 230,
-                    height: 100,
-                    backgroundColor: index % 2 === 0 ? '#FDF4EF' : '#EEF7FE',
-                    borderRadius: 10,
-                    padding: 16,
-                    position: 'relative',
-                    cursor: 'pointer',
-                    userSelect: 'none',
-                    overflow: 'hidden',
-                  }}
-                >
-                  <div
-                    style={{
-                      width: 100,
-                      height: 100,
-                      backgroundColor: '#FED7C7',
-                      borderRadius: 50,
-                      position: 'absolute',
-                      right: -20,
-                      bottom: -40,
-                    }}
-                  />
-                  <Image
-                    width={0}
-                    height={0}
-                    sizes='100vw'
-                    priority={true}
-                    src={course.threeDPreview}
-                    alt={course.name}
-                    style={{
-                      width: 70,
-                      height: 'auto',
-                      position: 'absolute',
-                      right: 0,
-                      bottom: 0,
-                    }}
-                  />
-                  <div style={{marginRight: 50, marginBottom: 'auto'}}>
-                    <elements.CourseName
-                      course={course}
-                      numberOfLines={2}
-                      style={{color: theme.colors.bodyTextColor}}
-                    />
-                  </div>
-                  <text.T14 style={{color: theme.colors.secondaryTextColor}}>
-                    {[3, 5, 7, 9, 11, 13, 15, 17][index]} Courses
-                  </text.T14>
-                </Link>
+              <SwiperSlide key={index} style={{width: 'auto'}}>
+                <items.NewCourseItem index={index} course={course} />
               </SwiperSlide>
             );
           })}
         </Swiper>
-      </div>
+      </section>
+    );
+  };
+
+  const renderLiveWorkshops = () => {
+    if (loading) return <LoadingSkeleton />;
+    if (!liveCourses.length || isSearching || searchResults.length > 0) return null;
+    
+    return (
+      <section style={{paddingBottom: 30}}>
+        <div className='container'>
+          <components.BlockHeading
+            title='Upcoming Most Subscribed Live Workshops'
+            containerStyle={{marginBottom: 7}}
+          />
+        </div>
+
+        <ul style={{display: 'flex', flexDirection: 'column', gap: 10}}>
+          {liveCourses.map((course, index, array) => {
+            const isLast = index === array.length - 1;
+            return (
+              <elements.CourseCard
+                key={course.id}
+                course={course}
+                isLast={isLast}
+                section='top rated'
+              />
+            );
+          })}
+        </ul>
+      </section>
     );
   };
 
   const renderOftenSearched = () => {
+    if (loading || isSearching || searchResults.length > 0) return null;
+    
     return (
-      <section style={{paddingBottom: 30}} className='container'>
-        <components.BlockHeading
-          title='Often searched'
-          containerStyle={{marginBottom: 7}}
-        />
-        <ul
+      <section style={{marginBottom: 30}}>
+        <div className='container'>
+          <components.BlockHeading
+            title='Often searched'
+            containerStyle={{marginBottom: 7}}
+          />
+        </div>
+        <div
           style={{
             display: 'flex',
-            flexDirection: 'row',
-            gap: 10,
             flexWrap: 'wrap',
+            gap: 8,
+            padding: '0 20px',
           }}
         >
-          {tags.map((tag) => {
-            return (
-              <Link
-                href={Routes.CATEGORY_LIST}
-                key={tag.id}
-                style={{
-                  backgroundColor: '#EBE2FE',
-                  padding: '10px 16px',
-                  borderRadius: 10,
-                }}
-                className='clickable'
-              >
-                <text.H6 style={{color: '#7C6F97'}}>{tag.name}</text.H6>
-              </Link>
-            );
-          })}
-        </ul>
+          {upcomingWorkshops.map((workshop, index) => (
+            <Link
+              key={workshop.id}
+              href={Routes.COURSE_DETAILS.replace(':id', String(workshop.id))}
+              style={{
+                padding: '8px 16px',
+                borderRadius: 5,
+                backgroundColor: theme.colors.white,
+                border: `1px solid ${theme.colors.secondaryTextColor}`,
+              }}
+            >
+              <text.T12 style={{color: theme.colors.secondaryTextColor}}>
+                {workshop.name}
+              </text.T12>
+            </Link>
+          ))}
+        </div>
       </section>
     );
   };
@@ -288,9 +399,9 @@ export const Search: React.FC<Props> = ({courses}) => {
     return (
       <main className='scrollable'>
         {renderSearch()}
-        {renderNewCourses()}
-        {renderTopRated()}
-        {renderSpecialForYou()}
+        {renderSearchResults()}
+        {renderPopularCourses()}
+        {renderLiveWorkshops()}
         {renderOftenSearched()}
       </main>
     );

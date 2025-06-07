@@ -18,6 +18,14 @@ type Props = {
   course: CourseType;
   status?: 'ongoing' | 'completed';
   section: 'top rated' | 'category list' | 'my courses';
+  orderId?: string;
+  workshopId?: number;
+  startDate?: string;
+  meetingId?: string;
+  passcode?: string;
+  userId?: number;
+  userName?: string;
+  userEmail?: string;
 };
 
 export const CourseCard: React.FC<Props> = ({
@@ -25,6 +33,14 @@ export const CourseCard: React.FC<Props> = ({
   section,
   isLast,
   status,
+  orderId,
+  workshopId,
+  startDate,
+  meetingId,
+  passcode,
+  userId,
+  userName,
+  userEmail,
 }) => {
   if (section === 'top rated') {
     return (
@@ -46,15 +62,15 @@ export const CourseCard: React.FC<Props> = ({
       >
         <div
           style={{
-            width: 295,
-            height: 96,
+            width: 270,
+            height: 86,
             marginRight: 12,
             position: 'relative',
           }}
         >
           <Image
-            width={675}
-            height={196}
+            width={635}
+            height={176}
             sizes='100vw'
             alt={course.name}
             priority={true}
@@ -83,7 +99,7 @@ export const CourseCard: React.FC<Props> = ({
             </text.H6>
           </div>
           <div style={{display: 'flex', alignItems: 'center', marginTop: 8}}>
-            <svg.ClockSvg />
+            <svg.CourseUserSvg />
             <text.T14 style={{marginLeft: 6, marginRight: 'auto'}}>
               {course.trainer?.name || 'Trainer'}
             </text.T14>
@@ -119,15 +135,15 @@ export const CourseCard: React.FC<Props> = ({
       >
         <div
           style={{
-            width: 375,
-            height: 196,
+            width: 130,
+            height: 75,
             marginRight: 12,
             position: 'relative',
           }}
         >
           <Image
-            width={375}
-            height={196}
+            width={0}
+            height={0}
             sizes='100vw'
             alt={course.name}
             priority={true}
@@ -149,14 +165,14 @@ export const CourseCard: React.FC<Props> = ({
             }}
           />
         </div>
-        <div style={{width: '100%', position: 'relative'}}>
-          <div style={{width: 202, marginRight: 30}}>
+        <div style={{flex: 1, position: 'relative'}}>
+          <div style={{marginRight: 30}}>
             <text.H6 numberOfLines={2} style={{marginBottom: 10}}>
               {course.name}
             </text.H6>
           </div>
           <div style={{display: 'flex', alignItems: 'center', marginTop: 8}}>
-            <svg.ClockSvg />
+            <svg.CourseUserSvg />
             <text.T14 style={{marginLeft: 6, marginRight: 'auto'}}>
               {course.trainer?.name || 'Trainer'}
             </text.T14>
@@ -173,10 +189,21 @@ export const CourseCard: React.FC<Props> = ({
   }
 
   if (section === 'my courses') {
+    console.log('CourseCard for my courses - Status:', status);
+    if (status === 'ongoing') {
+      console.log('Ongoing Workshop Details:', {
+        courseId: course.id,
+        startDate,
+        meetingId,
+        passcode,
+        userId,
+        userName,
+        userEmail,
+      });
+    }
     return (
       <button
         style={{
-          width: '48%',
           marginBottom: 15,
           display: 'flex',
           flexDirection: 'column',
@@ -188,7 +215,7 @@ export const CourseCard: React.FC<Props> = ({
       >
         <Link
           style={{
-            width: 375,
+            width: '100%',
             height: 196,
             position: 'relative',
             display: 'flex'
@@ -196,8 +223,9 @@ export const CourseCard: React.FC<Props> = ({
           href={Routes.COURSE_DETAILS.replace(':id', String(course.id))}
         >
           <Image
-            width={375}
-            height={196}
+            width={0}
+            height={0}
+            sizes='100vw'
             priority={true}
             src={`${URLS.IMAGE_URL}${course.image}`}
             alt={course.name}
@@ -241,17 +269,20 @@ export const CourseCard: React.FC<Props> = ({
                   display: 'flex',
                   alignItems: 'center',
                   marginTop: 8,
+                  marginBottom: 10,
                   justifyContent: 'space-between',
                 }}
               >
-                <text.T12
-                  style={{
-                    color: theme.colors.secondaryTextColor,
-                    ...theme.fonts.Lato,
-                  }}
-                >
-                  56%
-                </text.T12>
+                {startDate && (
+                  <text.T12
+                    style={{
+                      color: theme.colors.secondaryTextColor,
+                      ...theme.fonts.Lato,
+                    }}
+                  >
+                    Starts: {new Date(startDate).toLocaleDateString()}
+                  </text.T12>
+                )}
                 <div style={{...utils.rowCenter({gap: 3})}}>
                   <svg.StarSvg />
                   <text.T10
@@ -270,6 +301,7 @@ export const CourseCard: React.FC<Props> = ({
                   height: 3,
                   backgroundColor: '#C3D9FD',
                   borderRadius: 3,
+                  marginBottom: 10,
                 }}
               >
                 <div
@@ -281,11 +313,49 @@ export const CourseCard: React.FC<Props> = ({
                   }}
                 />
               </div>
+              {userId && userName && userEmail && (
+                <>{
+                  meetingId && passcode ? (
+                    <Link
+                      href={`https://meet.ipnacademy.in/?display_name=${userId}_${encodeURIComponent(userName)}&mn=${meetingId}&pwd=${passcode}&meeting_email=${userEmail}`}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                      style={{
+                        width: '100%',
+                        padding: '8px 16px',
+                        backgroundColor: theme.colors.mainColor,
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: 4,
+                        cursor: 'pointer',
+                        ...theme.fonts.Lato,
+                      }}
+                    >
+                      Joining Link
+                    </Link>
+                  ) : (
+                    <div
+                      style={{
+                        width: '100%',
+                        padding: '8px 16px',
+                        // backgroundColor: theme.colors.lightGrey,
+                        color: theme.colors.secondaryTextColor,
+                        border: '1px solid',
+                        borderRadius: 4,
+                        textAlign: 'center',
+                        ...theme.fonts.Lato,
+                      }}
+                    >
+                      Joining Link Avaliable Soon
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           )}
-          {status === 'completed' && (
+          {status === 'completed' && orderId && workshopId && (
             <Link
-              href={Routes.COURSE_COMPLETED}
+              href={`${Routes.COURSE_COMPLETED}?orderId=${orderId}&workshopId=${workshopId}`}
               style={{
                 width: '100%',
                 border: `1px solid ${theme.colors.secondaryTextColor}`,
@@ -296,7 +366,7 @@ export const CourseCard: React.FC<Props> = ({
               }}
             >
               <text.T10 style={{color: theme.colors.mainColor}}>
-                View certificate
+                View Certificate
               </text.T10>
             </Link>
           )}

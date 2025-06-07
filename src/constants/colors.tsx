@@ -12,6 +12,7 @@ export const colors = {
   antiFlashWhite: '#E7EBEB',
   transparent: 'transparent',
   secondaryTextColor: '#666666',
+  lightGrey: '#D3D3D3',
 };
 
 export const theme = {colors};

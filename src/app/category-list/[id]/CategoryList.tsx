@@ -1,61 +1,169 @@
 'use client';
 
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
+import {useRouter} from 'next/navigation';
 
+import {text} from '../../../text';
+import {Routes} from '../../../routes';
 import {theme} from '../../../constants';
 import {components} from '../../../components';
-import type {CourseType} from '../../../types';
 import {course as elements} from '../../../course';
+import {WorkshopListSkeleton} from '../../../components/WorkshopListSkeleton';
+
+interface Workshop {
+  id: number;
+  name: string;
+  image: string;
+  start_date: string;
+  duration: string;
+  price: number;
+  price_2: number;
+  cut_price: number | null;
+  description: string;
+  trainer_name: string;
+  trainer_designation: string;
+  trainer_image: string;
+  trainer_description: string;
+  subscription_count?: number;
+  trainer: {
+    name: string;
+    designation: string;
+    image: string;
+    description: string;
+  };
+}
 
 type Props = {
-  id: string;
-  courses: CourseType[];
+  id: string; // category ID from URL
 };
 
-export const CategoryList: React.FC<Props> = ({id, courses}) => {
+export const CategoryList: React.FC<Props> = ({id}) => {
+  const router = useRouter();
+  const [workshops, setWorkshops] = useState<Workshop[]>([]);
+  const [categoryName, setCategoryName] = useState('Category');
+  const [isLoading, setIsLoading] = useState(true);
+  const [isClient, setIsClient] = useState(false);
+
   useEffect(() => {
-    document.body.style.backgroundColor = theme.colors.white;
-  }, []);
+    setIsClient(true);
+    const userData = localStorage.getItem('user');
+    if (!userData) {
+      router.push('/sign-in');
+      return;
+    }
+    fetchCategoryWorkshops();
+  }, [id, router]);
 
-  const renderBackground = () => {
-    return <components.Background version={1} />;
+  const fetchCategoryWorkshops = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch(`/api/workshops/category/${id}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        setWorkshops(data.workshops);
+        setCategoryName(data.categoryName);
+      } else {
+        console.error('Failed to fetch category workshops:', data.message);
+      }
+    } catch (error) {
+      console.error('Error fetching category workshops:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const renderHeader = () => {
-    return (
-      <components.Header
-        showGoBack={true}
-        showFilter={true}
-        title='Category List'
-      />
-    );
-  };
+  if (!isClient) {
+    return null;
+  }
 
   const renderContent = () => {
+    if (isLoading) {
+      return <WorkshopListSkeleton />;
+    }
+
+    if (!workshops.length) {
+      return (
+        <main className='scrollable container' style={{paddingTop: 20, paddingBottom: 20}}>
+          <div className="text-center p-4 text-gray-500">
+            No workshops available in this category
+          </div>
+        </main>
+      );
+    }
+
     return (
-      <main style={{paddingBottom: 0}}>
-        <div style={{paddingTop: 10, paddingBottom: 20}}>
-          {courses.map((course, index, array) => {
-            const isLast = index === array.length - 1;
-            return (
-              <elements.CourseCard
-                key={index}
-                course={course}
-                isLast={isLast}
-                section='category list'
-              />
-            );
-          })}
-        </div>
+      <main className='scrollable'>
+        <section className='container' style={{marginTop: 10, marginBottom: 20}}>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              padding: 20,
+              borderRadius: 10,
+              border: `1px solid ${theme.colors.white}50`,
+              backgroundColor: `${theme.colors.white}50`,
+              boxShadow: '0px 4px 10px rgba(37, 73, 150, 0.05)',
+            }}
+          >
+            <text.H2 style={{marginBottom: 12}}>{categoryName} Workshops</text.H2>
+            <div
+              style={{
+                width: '100%',
+                height: 42,
+                borderRadius: 5,
+                display: 'flex',
+                alignItems: 'center',
+                padding: '0 16px',
+                background: `linear-gradient(90deg, rgba(246, 189, 229, 0.5) 0%, rgba(174, 183, 248, 0.5) 100%)`,
+              }}
+            >
+              <text.T14 style={{color: theme.colors.bodyTextColor}}>
+                {workshops.length} workshops available
+              </text.T14>
+            </div>
+          </div>
+        </section>
+
+        <section style={{paddingBottom: 30}}>
+          <ul style={{display: 'flex', flexDirection: 'column', gap: 10}}>
+            {workshops.map((workshop) => {
+              const courseData = {
+                id: workshop.id,
+                name: workshop.name,
+                image: workshop.image,
+                start_date: workshop.start_date,
+                duration: workshop.duration,
+                price: workshop.price,
+                price_2: workshop.price_2,
+                cut_price: workshop.cut_price,
+                description: workshop.description,
+                trainer: {
+                  name: workshop.trainer_name,
+                  designation: workshop.trainer_designation,
+                  image: workshop.trainer_image,
+                  description: workshop.trainer_description
+                }
+              };
+              return (
+                <elements.CourseCard
+                  key={workshop.id}
+                  course={courseData}
+                  section='category list' // Use 'category list' section
+                />
+              );
+            })}
+          </ul>
+        </section>
       </main>
     );
   };
 
   return (
     <components.Screen>
-      {renderBackground()}
-      {renderHeader()}
+      <components.Header title={categoryName + ' Workshops'} showGoBack={true} />
       {renderContent()}
+      <components.BottomTabBar />
     </components.Screen>
   );
 };

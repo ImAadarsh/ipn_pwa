@@ -5,17 +5,15 @@ import {svg} from '../svg';
 import {text} from '../text';
 
 type Props = {
-  title: string;
+  title: React.ReactNode;
   className?: string;
   containerStyle?: React.CSSProperties;
-  href?: string;
 };
 
 export const BlockHeading: React.FC<Props> = ({
   title,
   className,
   containerStyle,
-  href,
 }) => {
   return (
     <div
@@ -29,11 +27,6 @@ export const BlockHeading: React.FC<Props> = ({
       }}
     >
       <text.H3 style={{textTransform: 'capitalize'}}>{title}</text.H3>
-      {href && (
-        <Link href={href}>
-          <svg.ViewAllSvg />
-        </Link>
-      )}
     </div>
   );
 };

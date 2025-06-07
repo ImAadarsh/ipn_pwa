@@ -10,6 +10,7 @@ import {Routes} from '../routes';
 import {theme} from '../constants';
 import {CourseType} from '../types';
 import {course as elements} from '../course';
+import {URLS} from '../config';
 
 type Props = {
   isLast?: boolean;
@@ -28,12 +29,12 @@ export const WishlistItem: React.FC<Props> = ({course, isLast}) => {
       }}
     >
       {/* Image */}
-      <Link style={{minWidth: 110, height: 110, marginRight: 12}} href={'/'}>
+      <Link style={{minWidth: 110, height: 80, marginRight: 12}} href={'/'}>
         <Image
-          src={course.preview_90x90}
-          alt='course'
+          src={`${URLS.IMAGE_URL}${course.image}`}
+          alt={course.name}
           width={110}
-          height={110}
+          height={70}
         />
       </Link>
 

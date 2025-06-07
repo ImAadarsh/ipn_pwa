@@ -1,7 +1,8 @@
 'use client';
 
 import Image from 'next/image';
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
+import {useSearchParams} from 'next/navigation';
 
 import {svg} from '../../svg';
 import {text} from '../../text';
@@ -10,9 +11,102 @@ import {theme} from '../../constants';
 import {components} from '../../components';
 
 export const CourseCompleted: React.FC = () => {
+  const searchParams = useSearchParams();
+  const orderId = searchParams.get('orderId');
+  const workshopId = searchParams.get('workshopId');
+
+  const [showFeedbackForm, setShowFeedbackForm] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState('');
+  const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+  const [user, setUser] = useState<any>(null); // State to store user data
+
   useEffect(() => {
     document.body.style.backgroundColor = theme.colors.white;
   }, []);
+
+  const handleCertificateDownload = () => {
+    if (orderId) {
+      window.open(`https://ipnacademy.in/user/certificate.php?id=${orderId}`, '_blank');
+    }
+  };
+
+  const handleSubmitFeedback = async () => {
+    if (rating === 0 || !comment.trim()) {
+      alert('Please provide a rating and a comment.');
+      return;
+    }
+
+    const sessionToken = localStorage.getItem('sessionToken');
+    const storedUser = localStorage.getItem('user');
+
+    if (!sessionToken || !storedUser) {
+        alert('You must be logged in to submit feedback. Please sign in.');
+        return;
+    }
+
+    let parsedUser;
+    try {
+        parsedUser = JSON.parse(storedUser);
+    } catch (e) {
+        alert('Invalid user data found. Please log in again.');
+        return;
+    }
+
+    if (!parsedUser || !parsedUser.id || typeof parsedUser.id !== 'number') {
+        alert('Invalid user ID found. Please log in again.');
+        return;
+    }
+
+    const userId = parsedUser.id; // Use the validated userId
+
+    if (!workshopId) {
+        alert('Workshop ID is missing. Cannot submit feedback.');
+        return;
+    }
+
+    console.log('Submitting feedback with:', {
+      userId,
+      workshopId,
+      rating,
+      comment,
+      sessionToken: sessionToken ? '[TOKEN_PRESENT]' : '[TOKEN_MISSING]', // Log presence, not actual token
+    });
+
+    try {
+      setIsSubmittingFeedback(true);
+      
+      const response = await fetch('/api/feedback/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${sessionToken}`
+        },
+        body: JSON.stringify({
+          userId: userId,
+          workshopId: workshopId,
+          rating: rating,
+          comment: comment,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert('Feedback submitted successfully!');
+        setFeedbackSubmitted(true);
+        setShowFeedbackForm(false); // Hide form after submission
+      } else {
+        throw new Error(data.message || 'Failed to submit feedback');
+      }
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+      alert('Failed to submit feedback. Please try again.');
+    } finally {
+      setIsSubmittingFeedback(false);
+    }
+  };
 
   const renderHeader = () => {
     return <components.Header showGoBack={true} />;
@@ -73,20 +167,47 @@ export const CourseCompleted: React.FC = () => {
         >
           You have received a course completion <br /> certificate.
         </p>
-        <components.Button
-          label='Download certificate'
-          onClick={() => {}}
-          containerStyle={{width: '100%', marginBottom: 6}}
-        />
-        <components.Button
-          label='leave feedback'
-          onClick={() => {}}
-          containerStyle={{width: '100%'}}
-          style={{
-            backgroundColor: theme.colors.transparent,
-            color: theme.colors.mainColor,
-          }}
-        />
+
+        {orderId && (
+          <components.Button
+            label='Download certificate'
+            onClick={handleCertificateDownload}
+            containerStyle={{width: '100%', marginBottom: 6}}
+          />
+        )}
+
+        {!feedbackSubmitted && (
+          <components.Button
+            label='Leave feedback'
+            onClick={() => setShowFeedbackForm(true)}
+            containerStyle={{width: '100%'}}
+            style={{
+              backgroundColor: theme.colors.transparent,
+              color: theme.colors.mainColor,
+            }}
+          />
+        )}
+
+        {showFeedbackForm && (            
+          <div style={{width: '100%', marginTop: 20}}>
+            <text.T16 style={{marginBottom: 10, textAlign: 'center'}}>How was your experience?</text.T16>
+            <components.RatingStars rating={rating} setRating={setRating} containerStyle={{marginBottom: 20}} />
+            <components.InputField
+              label='Your feedback'
+              type='text'
+              inputType='text'
+              placeholder='Enter your comments'
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              containerStyle={{marginBottom: 20, height: 100}}
+            />
+            <components.Button
+              label={isSubmittingFeedback ? 'Submitting...' : 'Submit Feedback'}
+              onClick={handleSubmitFeedback}
+              containerStyle={{width: '100%'}}
+            />
+          </div>
+        )}
       </main>
     );
   };

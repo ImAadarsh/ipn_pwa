@@ -11,6 +11,7 @@ import {Routes} from '../routes';
 import {theme} from '../constants';
 import type {CourseType} from '../types';
 import {course as elements} from '../course';
+import { URLS } from '@/config';
 
 type Props = {
   index: number;
@@ -40,13 +41,14 @@ export const NewCourseItem: React.FC<Props> = ({index, course}) => {
         height={0}
         priority={true}
         sizes='100vw'
-        src={course.image}
+        src={`${course.image}`}
         alt={course.name}
         style={{
           height: 'auto',
           width: '88%',
           margin: '0 auto',
-          marginTop: 10,
+          marginTop: 50,
+          borderRadius: 10,
           marginBottom: 'auto',
         }}
       />
@@ -74,7 +76,7 @@ export const NewCourseItem: React.FC<Props> = ({index, course}) => {
             ...theme.fonts.Lato_700Bold,
           }}
         >
-          ${course.price.toFixed(2)}
+          ₹{course.price.toFixed(2)}
         </text.T16>
       </div>
       <elements.CourseRating

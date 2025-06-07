@@ -210,7 +210,7 @@ export const Home: React.FC<Props> = ({courses, categories: initialCategories}) 
   };
 
   const handleCategoryClick = (categoryId: number) => {
-    router.push(`/category/${categoryId}`);
+    router.push(`/category-list/${categoryId}`);
   };
 
   const [activeSlide, setActiveSlide] = useState(0);
@@ -225,7 +225,7 @@ export const Home: React.FC<Props> = ({courses, categories: initialCategories}) 
     return (
       <section className='container' style={{marginTop: 10, marginBottom: 20}}>
         <Link
-          href='live-workshops'
+          href={Routes.PROFILE_EDIT}
           style={{
             display: 'flex',
             flexDirection: 'column',
@@ -266,9 +266,10 @@ export const Home: React.FC<Props> = ({courses, categories: initialCategories}) 
               color: theme.colors.bodyTextColor,
             }}
           >
-            Find a workshop you want to learn.
+            Find a workshop you want to enroll.
           </span>
-          <button
+          <Link
+            href={Routes.SEARCH}
             style={{
               width: '100%',
               height: 42,
@@ -293,7 +294,7 @@ export const Home: React.FC<Props> = ({courses, categories: initialCategories}) 
               Search
             </span>
             <svg.FilterSvg />
-          </button>
+          </Link>
         </Link>
       </section>
     );
@@ -379,7 +380,6 @@ export const Home: React.FC<Props> = ({courses, categories: initialCategories}) 
         <div className='container'>
           <components.BlockHeading
             title='Workshop Categories'
-            href={Routes.CATEGORY_GRID}
             containerStyle={{marginBottom: 7}}
           />
         </div>
@@ -455,6 +455,24 @@ export const Home: React.FC<Props> = ({courses, categories: initialCategories}) 
             );
           })}
         </Swiper>
+        <div style={{padding: '0 20px', marginTop: 15}}>
+          <Link
+            href={Routes.CATEGORY_GRID}
+            style={{
+              display: 'block',
+              width: '100%',
+              padding: '12px 0',
+              textAlign: 'center',
+              borderRadius: 10,
+              backgroundColor: theme.colors.mainColor,
+              color: theme.colors.white,
+              ...theme.fonts.Lato_700Bold,
+              fontSize: 14,
+            }}
+          >
+            View All Categories
+          </Link>
+        </div>
       </section>
     );
   };
@@ -465,8 +483,21 @@ export const Home: React.FC<Props> = ({courses, categories: initialCategories}) 
       <section style={{paddingBottom: 30}}>
         <div className='container'>
           <components.BlockHeading
-            title='Live Workshops'
-            href='live-workshops'
+            title={
+              <span style={{display: 'flex', alignItems: 'center'}}>
+                Live Workshops
+                <span
+                  style={{
+                    marginLeft: 5,
+                    width: 8,
+                    height: 8,
+                    backgroundColor: 'red',
+                    borderRadius: '50%',
+                    animation: 'blink 1s infinite',
+                  }}
+                />
+              </span>
+            }
             containerStyle={{marginBottom: 7}}
           />
         </div>
@@ -531,7 +562,6 @@ export const Home: React.FC<Props> = ({courses, categories: initialCategories}) 
         <div className='container'>
           <components.BlockHeading
             title='Popular Workshops'
-            href='/popular-workshops'
             containerStyle={{marginBottom: 7}}
           />
         </div>
@@ -567,6 +597,24 @@ export const Home: React.FC<Props> = ({courses, categories: initialCategories}) 
             );
           })}
         </Swiper>
+        <div style={{padding: '0 20px', marginTop: 15}}>
+          <Link
+            href="/popular-workshops"
+            style={{
+              display: 'block',
+              width: '100%',
+              padding: '12px 0',
+              textAlign: 'center',
+              borderRadius: 10,
+              backgroundColor: theme.colors.mainColor,
+              color: theme.colors.white,
+              ...theme.fonts.Lato_700Bold,
+              fontSize: 14,
+            }}
+          >
+            View All Popular Workshops
+          </Link>
+        </div>
       </section>
     );
   };

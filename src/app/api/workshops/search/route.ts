@@ -1,11 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
+import {NextRequest, NextResponse} from 'next/server';
 import mysql from 'mysql2/promise';
 
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    const limit = searchParams.get('limit') || '6';
-    const type = searchParams.get('type') || '1'; // 1 for completed, 0 for live
+    const query = searchParams.get('query') || '';
+    const month = searchParams.get('month') || '';
 
     const connection = await mysql.createConnection({
       host: process.env.DB_HOST,
@@ -20,28 +20,33 @@ export async function GET(request: NextRequest) {
         t.name as trainer_name,
         t.designation as trainer_designation,
         t.image as trainer_image,
-        t.about as trainer_description,
-        COUNT(p.id) as purchase_count
+        t.about as trainer_description
       FROM workshops w
       LEFT JOIN trainers t ON w.trainer_id = t.id
-      LEFT JOIN payments p ON w.id = p.workshop_id
-      WHERE w.type = ?
-      AND w.price != 0
+      WHERE 1=1
     `;
 
-    const params: any[] = [type];
+    const params: any[] = [];
 
-    if (type === '1') {
-      // For completed workshops, get most bought in last 45 days
-      sql += ` AND p.created_at >= DATE_SUB(NOW(), INTERVAL 45 DAY)`;
+    if (query) {
+      sql += `
+        AND (
+          w.name LIKE ? OR
+          w.description LIKE ? OR
+          t.name LIKE ? OR
+          t.designation LIKE ?
+        )
+      `;
+      const searchPattern = `%${query}%`;
+      params.push(searchPattern, searchPattern, searchPattern, searchPattern);
     }
 
-    sql += `
-      GROUP BY w.id
-      ORDER BY purchase_count DESC
-      LIMIT ?
-    `;
-    params.push(parseInt(limit));
+    if (month) {
+      sql += ` AND MONTH(w.start_date) = ?`;
+      params.push(month);
+    }
+
+    sql += ` ORDER BY w.start_date DESC`;
 
     const [rows] = await connection.execute(sql, params);
     await connection.end();
@@ -51,11 +56,11 @@ export async function GET(request: NextRequest) {
       workshops: rows,
     });
   } catch (error) {
-    console.error('Error fetching popular workshops:', error);
+    console.error('Error searching workshops:', error);
     return NextResponse.json(
       {
         success: false,
-        message: 'Failed to fetch popular workshops',
+        message: 'Failed to search workshops',
       },
       {status: 500}
     );

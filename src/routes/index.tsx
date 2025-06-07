@@ -2,7 +2,7 @@ export enum TabScreens {
   HOME = 'Home',
   SEARCH = 'Search',
   PROFILE = 'Profile',
-  MY_COURSES = 'My Courses',
+  MY_COURSES = 'My Workshops',
 }
 
 export enum Routes {
