@@ -50,14 +50,13 @@ interface Cart {
 }
 
 interface Props {
-  params: Promise<{
+  params: {
     id: string;
-  }>;
+  };
 }
 
 export default function CheckoutPage({params}: Props) {
-  const resolvedParams = React.use(params);
-  const {id} = resolvedParams;
+  const {id} = params;
   const router = useRouter();
   const [workshop, setWorkshop] = useState<Workshop | null>(null);
   const [coupons, setCoupons] = useState<Coupon[]>([]);
