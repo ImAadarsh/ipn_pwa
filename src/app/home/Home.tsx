@@ -224,8 +224,7 @@ export const Home: React.FC<Props> = ({courses, categories: initialCategories}) 
     
     return (
       <section className='container' style={{marginTop: 10, marginBottom: 20}}>
-        <Link
-          href={Routes.PROFILE_EDIT}
+        <div
           style={{
             display: 'flex',
             flexDirection: 'column',
@@ -279,23 +278,18 @@ export const Home: React.FC<Props> = ({courses, categories: initialCategories}) 
               flexDirection: 'row',
               alignItems: 'center',
               padding: '0 16px',
-              background: `linear-gradient(90deg, rgba(246, 189, 229, 0.5) 0%, rgba(174, 183, 248, 0.5) 100%)`,
+              backgroundColor: theme.colors.white,
+              border: `1px solid ${theme.colors.white}50`,
+              boxShadow: '0px 4px 10px rgba(37, 73, 150, 0.05)',
+              textDecoration: 'none',
             }}
           >
-            <SearchSvg />
-            <span
-              style={{
-                ...theme.fonts.Lato,
-                fontSize: 14,
-                marginRight: 'auto',
-                color: theme.colors.bodyTextColor,
-              }}
-            >
-              Search
-            </span>
-            <svg.FilterSvg />
+            <svg.SearchSvg />
+            <text.T14 style={{color: theme.colors.secondaryTextColor}}>
+              Search workshops
+            </text.T14>
           </Link>
-        </Link>
+        </div>
       </section>
     );
   };
