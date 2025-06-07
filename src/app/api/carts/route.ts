@@ -31,6 +31,8 @@ interface CartRow extends RowDataPacket {
   item_discount: number;
 }
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: Request) {
   let connection;
   try {

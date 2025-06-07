@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import React, {useEffect, useState} from 'react';
 import {Swiper, SwiperSlide} from 'swiper/react';
+import Head from 'next/head';
 
 import {text} from '../../text';
 import {URLS} from '../../config';
@@ -46,7 +47,17 @@ export const Onboarding: React.FC = () => {
   };
 
   const renderHeader = () => {
-    return <components.Header />;
+    return (
+      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+        <Image
+          src={`${URLS.MAIN_URL}/assets/other/04.png`}
+          alt="IPN Academy Logo"
+          width={150}
+          height={50}
+          priority={true}
+        />
+      </header>
+    );
   };
 
   const renderCarousel = () => {
@@ -151,6 +162,19 @@ export const Onboarding: React.FC = () => {
 
   return (
     <components.Screen>
+      <Head>
+        <title>Welcome to IPN Academy - Your Gateway to Excellence</title>
+        <meta name="description" content="IPN Academy offers cutting-edge resources and professional skills development. Transform your career with our dynamic learning environment." />
+        <meta property="og:title" content="Welcome to IPN Academy - Your Gateway to Excellence" />
+        <meta property="og:description" content="IPN Academy offers cutting-edge resources and professional skills development. Transform your career with our dynamic learning environment." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://app.ipnacademy.in/" />
+        <meta property="og:image" content={`${URLS.MAIN_URL}/assets/other/04.png`} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Welcome to IPN Academy - Your Gateway to Excellence" />
+        <meta name="twitter:description" content="IPN Academy offers cutting-edge resources and professional skills development. Transform your career with our dynamic learning environment." />
+        <meta name="twitter:image" content={`${URLS.MAIN_URL}/assets/other/04.png`} />
+      </Head>
       {renderBackground()}
       {renderHeader()}
       {renderCarousel()}

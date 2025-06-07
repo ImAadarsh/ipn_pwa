@@ -19,6 +19,8 @@ interface Transaction extends RowDataPacket {
   order_id: string;
 }
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: Request) {
   try {
     // Get user ID from request

@@ -11,6 +11,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {themeColor: theme.colors.white};
 
+export const dynamic = 'force-dynamic';
+
 export default async function Page() {
   const [coupons] = await Promise.all([data.getCoupons()]);
 
