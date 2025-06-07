@@ -798,11 +798,10 @@ export const CourseDetails: React.FC<Props> = ({id}) => {
                 <div style={{
                   padding: '4px 12px',
                   borderRadius: 30,
-                  backgroundColor: theme.colors.mainColor,
+                  backgroundColor: theme.colors.mainOrange,
                   marginRight: 12,
                   ...theme.fonts.Lato_700Bold,
-                  fontSize: 12,
-                  boxShadow: '0 4px 15px rgba(37, 73, 150, 0.2)',
+                  fontSize: 12
                 }}>
                   Premium Workshop
                 </div>
@@ -820,11 +819,12 @@ export const CourseDetails: React.FC<Props> = ({id}) => {
               )}
             </div>
 
-            <text.H1 style={{
+            <text.H4 style={{
               color: theme.colors.mainColor,
-              fontSize: 28,
+              fontSize: 22,
               lineHeight: 1.4,
-              marginBottom: 16,
+              marginBottom: 40,
+              fontWeight: 600,
               wordBreak: 'break-word',
               whiteSpace: 'normal',
               overflow: 'visible',
@@ -832,7 +832,7 @@ export const CourseDetails: React.FC<Props> = ({id}) => {
               minHeight: 'auto',
             }}>
               {workshop.name}
-            </text.H1>
+            </text.H4>
 
             <div style={{
               display: 'flex',
@@ -868,12 +868,12 @@ export const CourseDetails: React.FC<Props> = ({id}) => {
                   marginRight: 12,
                   boxShadow: '0 2px 8px rgba(37, 73, 150, 0.1)',
                 }}>
-                  <svg.UserSvg />
+                  <svg.CourseUserSvg />
                 </div>
                 <div>
                   <text.T12 style={{color: theme.colors.secondaryTextColor}}>Enrolled</text.T12>
                   <text.T14 style={{color: theme.colors.mainColor, ...theme.fonts.Lato_700Bold}}>
-                    {workshop.total_subscribers} Students
+                    {workshop.total_subscribers} Educators
                   </text.T14>
                 </div>
               </div>
