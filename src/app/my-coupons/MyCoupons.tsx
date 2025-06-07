@@ -117,16 +117,7 @@ export const MyCoupons: React.FC = () => {
   const renderContent = () => {
     if (isLoading) {
       return (
-        <div style={{
-          textAlign: 'center',
-          padding: '40px 20px',
-          backgroundColor: 'rgba(255, 255, 255, 0.9)',
-          borderRadius: 12,
-          margin: '20px',
-          boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-        }}>
-          Loading coupons...
-        </div>
+        <LoadingSkeleton />
       );
     }
 

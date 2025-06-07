@@ -475,8 +475,6 @@ export default function CheckoutPage({params}: Props) {
   const renderCouponSection = () => {
     if (!workshop || !cart) return null; 
     
-    const originalPrice = workshop.type === 0 ? workshop.price : workshop.price_2;
-
     return (
       <section style={{marginBottom: 32}}>
         <text.H3 style={{marginBottom: 16}}>Apply Coupon</text.H3>
