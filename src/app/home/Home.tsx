@@ -7,8 +7,9 @@ import {Swiper, SwiperSlide} from 'swiper/react';
 import {useRouter} from 'next/navigation';
 import {Autoplay, Pagination} from 'swiper/modules';
 import 'swiper/css';
-import 'swiper/css/pagination';
+// import 'swiper/css/pagination';
 import 'swiper/css/navigation';
+import { FaChalkboardTeacher, FaBook, FaGraduationCap, FaUsers, FaLaptop, FaLightbulb, FaBrain, FaChartLine, FaHandshake, FaGlobe } from 'react-icons/fa';
 
 import {svg} from '../../svg';
 import {text} from '../../text';
@@ -260,18 +261,18 @@ export const Home: React.FC<Props> = ({courses, categories: initialCategories}) 
     if (loading) return null;
     
     return (
-      <section style={{marginBottom: 30}}>
+      <section style={{marginBottom: 10}}>
         <Swiper
           modules={[Autoplay, Pagination]}
           slidesPerView={'auto'}
           pagination={{clickable: true}}
-          mousewheel={true}
+          mousewheel={false}
           autoplay={{
             delay: 3000,
             disableOnInteraction: false,
           }}
           loop={true}
-          style={{marginBottom: 16}}
+          style={{marginBottom: 2}}
           onSlideChange={handleSlideChange}
         >
           {sliders.map((slider, index) => {
@@ -288,7 +289,7 @@ export const Home: React.FC<Props> = ({courses, categories: initialCategories}) 
                     height={0}
                     sizes='100vw'
                     priority={true}
-                    style={{width: '100%', height: 'auto', borderRadius: 10}}
+                    style={{width: '100%', height: 'auto', borderRadius: 7}}
                   />
                 </div>
               </SwiperSlide>
@@ -327,6 +328,24 @@ export const Home: React.FC<Props> = ({courses, categories: initialCategories}) 
   const renderCategories = () => {
     if (!categories.length) return null;
     
+    // Map of category names to icons
+    const categoryIcons: { [key: string]: React.ReactNode } = {
+      'Early Childhood Education': <FaGraduationCap size={24} color="rgba(255, 255, 255, 1)" />,
+      'Primary Education': <FaBook size={24} color="rgba(255, 255, 255, 0.9)" />,
+      'Secondary Education': <FaChalkboardTeacher size={24} color="rgba(255, 255, 255, 0.9)" />,
+      'Higher Education': <FaUsers size={24} color="rgba(255, 255, 255, 0.9)" />,
+      'How to use AI in Classrooms': <FaLightbulb size={24} color="rgba(255, 255, 255, 0.9)" />,
+      'Training': <FaChalkboardTeacher size={24} color="rgba(255, 255, 255, 0.9)" />,
+      'Cybersecurity': <FaLaptop size={24} color="rgba(255, 255, 255, 0.9)" />,
+      'NEP 2020': <FaBook size={24} color="rgba(255, 255, 255, 0.9)" />,
+      'National Curriculum Framework 2022': <FaChartLine size={24} color="rgba(255, 255, 255, 0.9)" />,
+      'Student Support': <FaUsers size={24} color="rgba(255, 255, 255, 0.9)" />,
+      'Assessment & Evaluation': <FaBrain size={24} color="rgba(255, 255, 255, 0.9)" />,
+      'Educational Research': <FaGraduationCap size={24} color="rgba(255, 255, 255, 0.9)" />,
+      'Inclusive Education': <FaHandshake size={24} color="rgba(255, 255, 255, 0.9)" />,
+      'Global Education': <FaGlobe size={24} color="rgba(255, 255, 255, 0.9)" />,
+    };
+    
     return (
       <section style={{marginBottom: 30}}>
         <div className='container'>
@@ -344,6 +363,8 @@ export const Home: React.FC<Props> = ({courses, categories: initialCategories}) 
         >
           {categories.map((category, index) => {
             const gradientIndex = index % categoryGradients.length;
+            const categoryName = category.name || 'Unnamed Category';
+            const Icon = categoryIcons[categoryName] || <FaChalkboardTeacher size={24} color="#ffccab" />;
             
             return (
               <SwiperSlide key={category.id} style={{width: 'auto'}}>
@@ -378,19 +399,22 @@ export const Home: React.FC<Props> = ({courses, categories: initialCategories}) 
                       zIndex: 0,
                     }}
                   />
-                  <div style={{zIndex: 1}}>
-                    <span
-                      style={{
-                        fontSize: 14,
-                        ...theme.fonts.Lato,
-                        fontWeight: 700,
-                        lineHeight: 1.5,
-                        color: theme.colors.white,
-                        display: 'block',
-                      }}
-                    >
-                      {category.name || 'Unnamed Category'}
-                    </span>
+                  <div style={{zIndex: 1, display: 'flex', flexDirection: 'column', gap: 8}}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      {Icon}
+                      <span
+                        style={{
+                          fontSize: 14,
+                          ...theme.fonts.Lato,
+                          fontWeight: 700,
+                          lineHeight: 1.5,
+                          color: theme.colors.white,
+                          display: 'block',
+                        }}
+                      >
+                        {categoryName}
+                      </span>
+                    </div>
                     <span
                       style={{
                         fontSize: 12,
@@ -571,6 +595,69 @@ export const Home: React.FC<Props> = ({courses, categories: initialCategories}) 
     );
   };
 
+  const renderBetterTogether = () => {
+    return (
+      <section style={{paddingBottom: 30}}>
+        <div className='container'>
+          <components.BlockHeading
+            title='Better Together'
+            containerStyle={{marginBottom: 7}}
+          />
+        </div>
+        <div style={{padding: '0 20px'}}>
+          <Link
+            href="/better-together"
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              padding: '20px',
+              borderRadius: 10,
+              background: 'linear-gradient(45deg, #3b82f6 0%, #60a5fa 100%)',
+              color: theme.colors.white,
+              textDecoration: 'none',
+              position: 'relative',
+              overflow: 'hidden',
+            }}
+          >
+            <div
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundImage: 'url("/assets/images/07.png")',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
+                opacity: 0.2,
+                zIndex: 0,
+              }}
+            />
+            <div style={{zIndex: 1}}>
+              <text.H2 style={{color: theme.colors.white, marginBottom: 8}}>
+                Your Global Community
+              </text.H2>
+              <text.T14 style={{color: theme.colors.white, opacity: 0.9, marginBottom: 16}}>
+                Discover how we're transforming education together
+              </text.T14>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                ...theme.fonts.Lato_700Bold,
+                fontSize: 14,
+              }}>
+                Learn More
+                <svg.RightArrowSvg />
+              </div>
+            </div>
+          </Link>
+        </div>
+      </section>
+    );
+  };
+
   const renderBottomTabBar = () => {
     return <components.BottomTabBar />;
   };
@@ -582,6 +669,7 @@ export const Home: React.FC<Props> = ({courses, categories: initialCategories}) 
         {renderCarousel()}
         {renderCategories()}
         {renderTopRated()}
+        {renderBetterTogether()}
         {renderPopular()}
       </main>
     );
