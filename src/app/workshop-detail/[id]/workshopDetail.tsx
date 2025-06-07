@@ -773,7 +773,30 @@ export const CourseDetails: React.FC<Props> = ({id}) => {
                 width: '100%',
                 height: 'auto',
                 objectFit: 'contain',
+                borderBottomLeftRadius: 20,
+                borderBottomRightRadius: 20,
+                padding: '5px',
               }}
+            />
+            <hr
+            style={{
+              marginTop: '5px'
+            }}
+            />
+            <hr
+            style={{
+              marginTop: '1px'
+            }}
+            />
+             <hr
+            style={{
+              marginTop: '1px'
+            }}
+            />
+             <hr
+            style={{
+              marginTop: '1px'
+            }}
             />
           </div>
         </section>

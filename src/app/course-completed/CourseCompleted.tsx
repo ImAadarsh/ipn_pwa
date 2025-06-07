@@ -164,7 +164,7 @@ export const CourseCompleted: React.FC = () => {
             ...theme.fonts.Lato,
           }}
         >
-          You have received a course completion <br /> certificate.
+          You have received a workshop completion <br /> certificate.
         </p>
 
         {orderId && (

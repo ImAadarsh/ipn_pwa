@@ -9,6 +9,8 @@ export interface CourseType {
   price_2: number;
   cut_price: number | null;
   description: string;
+  link?: string;
+  rlink?: string | null;
   trainer: {
     name: string;
     designation: string;

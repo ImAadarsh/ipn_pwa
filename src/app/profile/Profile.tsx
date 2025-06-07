@@ -261,6 +261,23 @@ export const Profile: React.FC = () => {
             </Link>
           </div>
         </section>
+
+        {/* Developer Remark */}
+        <div style={{
+          textAlign: 'center',
+          marginTop: 40,
+          marginBottom: 20,
+          fontSize: 12,
+        }}>
+          <a 
+            href="https://endeavourdigital.in/"
+            target="_blank" 
+            rel="noopener noreferrer"
+            style={{color: theme.colors.secondaryTextColor, textDecoration: 'none'}}
+          >
+            Developed By Endeavour Digital
+          </a>
+        </div>
       </main>
     );
   };
