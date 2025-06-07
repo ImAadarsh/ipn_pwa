@@ -150,7 +150,7 @@ export const SignIn: React.FC = () => {
 
           {/* PHONE VERIFICATION */}
           <section style={{marginBottom: 20, display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
-            <div className="pe_signin_button" data-client-id="15695407177920574360" style={{display: 'flex', justifyContent: 'center'}}></div>
+            <div className="pe_signin_button" data-client-id="14911053106683182772" style={{display: 'flex', justifyContent: 'center'}}></div>
             {verificationStatus && (
               <text.T16 
                 style={{

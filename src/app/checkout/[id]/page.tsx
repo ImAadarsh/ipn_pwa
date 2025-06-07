@@ -9,6 +9,7 @@ import {theme} from '../../../constants';
 import {URLS} from '../../../config';
 import {components} from '../../../components';
 import {svg} from '../../../svg';
+import {LoadingSkeleton} from '../../../components/LoadingSkeleton';
 
 interface Workshop {
   id: number;
@@ -78,14 +79,17 @@ export default function CheckoutPage({params}: Props) {
       return;
     }
     setUser(JSON.parse(userData));
-    fetchWorkshopDetails();
-    fetchApplicableCoupons();
-    fetchCart();
+    // Fetch all data concurrently
+    Promise.all([
+      fetchWorkshopDetails(),
+      fetchApplicableCoupons(),
+      fetchCart()
+    ]).finally(() => setLoading(false));
+
   }, [id]);
 
   const fetchWorkshopDetails = async () => {
     try {
-      setLoading(true);
       setError(null);
       
       const response = await fetch(`/api/workshops/${id}`);
@@ -98,8 +102,6 @@ export default function CheckoutPage({params}: Props) {
       }
     } catch (error) {
       setError('An unexpected error occurred');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -129,14 +131,12 @@ export default function CheckoutPage({params}: Props) {
         if (data.cart) {
           setCart(data.cart);
           if (data.cart.coupon_code) {
-            // Find the coupon in the coupons list
             const coupon = coupons.find(c => c.coupon_code === data.cart.coupon_code);
             if (coupon) {
               setSelectedCoupon(coupon);
             }
           }
         } else {
-          // If no cart exists, create one
           const createResponse = await fetch('/api/coupons/apply', {
             method: 'POST',
             headers: {
@@ -188,7 +188,6 @@ export default function CheckoutPage({params}: Props) {
         throw new Error(data.message || 'Failed to remove coupon');
       }
 
-      // Update the cart state with the new data
       const updatedCart = {
         ...cart,
         coupon_code: null,
@@ -252,73 +251,71 @@ export default function CheckoutPage({params}: Props) {
 
   const handleAccountSelect = async (selectedUser: any) => {
     try {
-      // Store user data and session token
-      localStorage.setItem('user', JSON.stringify(selectedUser));
-      localStorage.setItem('sessionToken', selectedUser.sessionToken);
-      setUser(selectedUser);
-      setShowMultipleAccounts(false);
-      setMultipleAccounts([]);
-    } catch (error) {
-      setError(error instanceof Error ? error.message : 'Failed to select account');
-    }
-  };
-
-  const handleProceedToPayment = async () => {
-    if (!user || !workshop) return;
-
-    try {
       setIsProcessingPayment(true);
       setError(null);
 
-      // Create cart if not exists
-      if (!cart) {
-        const response = await fetch('/api/coupons/apply', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            workshop_id: id,
-            user_id: user.id,
-          }),
-        });
-
-        const data = await response.json();
-        if (!data.success) {
-          throw new Error(data.message || 'Failed to create cart');
-        }
-        setCart(data.cart);
-      }
-
-      // Initiate payment
-      const paymentResponse = await fetch('/api/payments/initiate', {
+      const response = await fetch('/api/auth/verify-registration', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          cart_id: cart?.id,
-          workshop_id: id,
-          user_id: user.id,
-          amount: calculateFinalPrice(),
-          coupon_code: selectedCoupon?.coupon_code,
-          name: user.name,
-          email: user.email,
-          mobile: user.mobile,
+          name: selectedUser.name,
+          email: selectedUser.email,
+          phone: selectedUser.mobile,
         }),
       });
 
-      const paymentData = await paymentResponse.json();
-      if (!paymentData.success) {
-        throw new Error(paymentData.message || 'Failed to initiate payment');
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.message || 'Failed to select account');
       }
 
-      // Redirect to payment URL
-      if (paymentData.url) {
-        window.location.href = paymentData.url;
+      localStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem('sessionToken', data.user.sessionToken);
+      setUser(data.user);
+      setShowMultipleAccounts(false);
+      setMultipleAccounts([]);
+
+      await handleProceedToPayment();
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to select account');
+    } finally {
+      setIsProcessingPayment(false);
+    }
+  };
+
+  const handleProceedToPayment = async () => {
+    if (!user || !workshop || !cart) return;
+
+    try {
+      setIsProcessingPayment(true);
+      setError(null);
+
+      const response = await fetch('/api/payments/initiate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: user.id,
+          workshop_id: workshop.id,
+          amount: calculateFinalPrice(),
+          coupon_code: selectedCoupon?.coupon_code || null,
+          cart_id: cart.id,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.payment_url) {
+        router.push(data.payment_url);
+      } else {
+        throw new Error(data.message || 'Payment initiation failed');
       }
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'Failed to process payment');
+      setError(error instanceof Error ? error.message : 'Failed to initiate payment');
     } finally {
       setIsProcessingPayment(false);
     }
@@ -476,47 +473,43 @@ export default function CheckoutPage({params}: Props) {
   };
 
   const renderCouponSection = () => {
+    if (!workshop || !cart) return null; 
+    
+    const originalPrice = workshop.type === 0 ? workshop.price : workshop.price_2;
+
     return (
-      <section style={{
-        marginBottom: 24,
-        padding: 20,
-        borderRadius: 12,
-        backgroundColor: theme.colors.white,
-        boxShadow: '0 4px 15px rgba(37, 73, 150, 0.1)',
-      }}>
+      <section style={{marginBottom: 32}}>
         <text.H3 style={{marginBottom: 16}}>Apply Coupon</text.H3>
-        
         {selectedCoupon ? (
           <div style={{
+            padding: 20,
+            borderRadius: 16,
+            backgroundColor: `${theme.colors.mainColor}05`,
+            boxShadow: '0 4px 15px rgba(37, 73, 150, 0.1)',
             display: 'flex',
-            alignItems: 'center',
             justifyContent: 'space-between',
-            padding: 12,
-            borderRadius: 8,
-            backgroundColor: `${theme.colors.mainColor}10`,
-            marginBottom: 16,
+            alignItems: 'center',
           }}>
-            <div style={{display: 'flex', alignItems: 'center', gap: 8}}>
-              <svg.TagSvg />
-              <text.T14 style={{color: theme.colors.mainColor, ...theme.fonts.Lato_700Bold}}>
-                {selectedCoupon.coupon_code}
-              </text.T14>
-              <text.T14 style={{color: theme.colors.secondaryTextColor}}>
-                - ₹{selectedCoupon.flat_discount}
+            <div>
+              <text.T16 style={{...theme.fonts.Lato_700Bold, color: theme.colors.mainColor}}>
+                {selectedCoupon.coupon_code} Applied!
+              </text.T16>
+              <text.T14 style={{color: theme.colors.secondaryTextColor, marginTop: 4}}>
+                You save ₹{selectedCoupon.flat_discount} with this coupon.
               </text.T14>
             </div>
             <button
               onClick={handleRemoveCoupon}
               style={{
+                backgroundColor: theme.colors.coralRed,
+                color: theme.colors.white,
                 padding: '8px 16px',
-                borderRadius: 6,
-                backgroundColor: theme.colors.white,
-                border: `1px solid ${theme.colors.mainColor}`,
-                color: theme.colors.mainColor,
-                ...theme.fonts.Lato_700Bold,
-                fontSize: 12,
+                borderRadius: 8,
+                border: 'none',
                 cursor: 'pointer',
-                transition: 'all 0.2s ease',
+                ...theme.fonts.Lato_700Bold,
+                fontSize: 14,
+                transition: 'background-color 0.2s ease',
               }}
               className="clickable"
             >
@@ -524,11 +517,11 @@ export default function CheckoutPage({params}: Props) {
             </button>
           </div>
         ) : (
-          <div style={{display: 'flex', gap: 12, marginBottom: 16}}>
+          <div style={{display: 'flex', gap: 12}}>
             <input
               type="text"
               value={couponCode}
-              onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+              onChange={(e) => setCouponCode(e.target.value)}
               placeholder="Enter coupon code"
               style={{
                 flex: 1,
@@ -552,28 +545,24 @@ export default function CheckoutPage({params}: Props) {
                 cursor: isApplyingCoupon || !couponCode.trim() ? 'not-allowed' : 'pointer',
                 opacity: isApplyingCoupon || !couponCode.trim() ? 0.7 : 1,
                 border: 'none',
+                transition: 'opacity 0.2s ease',
               }}
+              className="clickable"
             >
               {isApplyingCoupon ? 'Applying...' : 'Apply'}
             </button>
           </div>
         )}
 
-        {error && (
-          <text.T14 style={{
-            color: 'red',
-            marginBottom: 16,
-          }}>
+        {error && ( // Display general error for coupon application
+          <text.T14 style={{color: 'red', marginTop: 12, textAlign: 'center'}}>
             {error}
           </text.T14>
         )}
 
         {coupons.length > 0 && !selectedCoupon && (
-          <div>
-            <text.T14 style={{
-              color: theme.colors.secondaryTextColor,
-              marginBottom: 12,
-            }}>
+          <div style={{marginTop: 20}}>
+            <text.T14 style={{marginBottom: 10, color: theme.colors.secondaryTextColor}}>
               Available Coupons:
             </text.T14>
             <div style={{display: 'flex', flexDirection: 'column', gap: 8}}>
@@ -582,29 +571,27 @@ export default function CheckoutPage({params}: Props) {
                   key={coupon.id}
                   onClick={() => setCouponCode(coupon.coupon_code)}
                   style={{
-                    padding: 12,
+                    padding: '10px 15px',
                     borderRadius: 8,
-                    border: `1px solid ${theme.colors.secondaryTextColor}20`,
-                    backgroundColor: theme.colors.white,
+                    border: `1px dashed ${theme.colors.mainColor}`,
+                    backgroundColor: `${theme.colors.mainColor}05`,
                     cursor: 'pointer',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    transition: 'background-color 0.2s ease',
                   }}
                   className="clickable"
                 >
-                  <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                    <div style={{display: 'flex', alignItems: 'center', gap: 8}}>
-                      <svg.TagSvg />
-                      <text.T14 style={{...theme.fonts.Lato_700Bold}}>
-                        {coupon.coupon_code}
-                      </text.T14>
-                    </div>
-                    <text.T14 style={{color: theme.colors.mainColor}}>
-                      - ₹{coupon.flat_discount}
+                  <div>
+                    <text.T14 style={{...theme.fonts.Lato_700Bold, color: theme.colors.mainColor}}>
+                      {coupon.coupon_code}
                     </text.T14>
+                    <text.T12 style={{color: theme.colors.secondaryTextColor, marginTop: 2}}>
+                      Flat ₹{coupon.flat_discount} OFF
+                    </text.T12>
                   </div>
-                  <text.T12 style={{
-                    color: theme.colors.secondaryTextColor,
-                    marginTop: 4,
-                  }}>
+                  <text.T12 style={{color: theme.colors.secondaryTextColor}}>
                     Valid till {new Date(coupon.valid_till).toLocaleDateString()}
                   </text.T12>
                 </div>
@@ -617,60 +604,38 @@ export default function CheckoutPage({params}: Props) {
   };
 
   const renderPriceDetails = () => {
-    if (!workshop) return null;
-
-    const basePrice = workshop.type === 0 ? workshop.price : workshop.price_2;
-    const discount = selectedCoupon ? selectedCoupon.flat_discount : 0;
-    const finalPrice = calculateFinalPrice();
+    if (!workshop || !cart) return null; 
 
     return (
-      <section style={{
-        padding: 20,
-        borderRadius: 12,
-        backgroundColor: theme.colors.white,
-        boxShadow: '0 4px 15px rgba(37, 73, 150, 0.1)',
-      }}>
+      <section style={{marginBottom: 32}}>
         <text.H3 style={{marginBottom: 16}}>Price Details</text.H3>
-        
-        <div style={{display: 'flex', flexDirection: 'column', gap: 12}}>
-          <div style={{display: 'flex', justifyContent: 'space-between'}}>
-            <text.T14 style={{color: theme.colors.secondaryTextColor}}>
-              Base Price
-            </text.T14>
-            <text.T14>₹{basePrice}</text.T14>
+        <div style={{
+          padding: 20,
+          borderRadius: 16,
+          backgroundColor: theme.colors.white,
+          boxShadow: '0 4px 15px rgba(37, 73, 150, 0.1)',
+        }}>
+          <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: 12}}>
+            <text.T16 style={{color: theme.colors.secondaryTextColor}}>Workshop Price</text.T16>
+            <text.T16 style={{color: theme.colors.mainColor, ...theme.fonts.Lato_700Bold}}>
+              ₹{workshop.type === 0 ? workshop.price : workshop.price_2}
+            </text.T16>
           </div>
-
-          {workshop.cut_price && (
-            <div style={{display: 'flex', justifyContent: 'space-between'}}>
-              <text.T14 style={{color: theme.colors.secondaryTextColor}}>
-                Original Price
-              </text.T14>
-              <text.T14 style={{textDecoration: 'line-through', color: theme.colors.secondaryTextColor}}>
-                ₹{workshop.cut_price}
-              </text.T14>
-            </div>
-          )}
-
-          {discount > 0 && (
-            <div style={{display: 'flex', justifyContent: 'space-between'}}>
-              <text.T14 style={{color: theme.colors.secondaryTextColor}}>
-                Coupon Discount
-              </text.T14>
-              <text.T14 style={{color: theme.colors.mainColor}}>
-                - ₹{discount}
-              </text.T14>
-            </div>
-          )}
-
+          <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: 12}}>
+            <text.T16 style={{color: theme.colors.secondaryTextColor}}>Discount</text.T16>
+            <text.T16 style={{color: theme.colors.coralRed, ...theme.fonts.Lato_700Bold}}>
+              - ₹{selectedCoupon ? selectedCoupon.flat_discount : 0}
+            </text.T16>
+          </div>
           <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            paddingTop: 12,
-            borderTop: `1px solid ${theme.colors.secondaryTextColor}20`,
-          }}>
-            <text.H3>Total Amount</text.H3>
+            height: 1,
+            backgroundColor: `${theme.colors.secondaryTextColor}20`,
+            margin: '20px 0',
+          }} />
+          <div style={{display: 'flex', justifyContent: 'space-between'}}>
+            <text.H3 style={{color: theme.colors.mainColor}}>Total Amount</text.H3>
             <text.H3 style={{color: theme.colors.mainColor}}>
-              ₹{finalPrice}
+              ₹{calculateFinalPrice()}
             </text.H3>
           </div>
         </div>
@@ -680,104 +645,74 @@ export default function CheckoutPage({params}: Props) {
 
   const renderContent = () => {
     if (loading) {
+      return <LoadingSkeleton />;
+    }
+
+    if (error) {
       return (
-        <main className='scrollable container' style={{paddingTop: 20, paddingBottom: 20}}>
-          <div className="flex justify-center items-center min-h-[200px]">
-            Loading...
-          </div>
-        </main>
+        <div style={{textAlign: 'center', padding: '20px', color: 'red'}}>
+          {error}
+        </div>
       );
     }
 
     if (!workshop) {
       return (
-        <main className='scrollable container' style={{paddingTop: 20, paddingBottom: 20}}>
-          <div className="text-center p-4 text-gray-500">
-            Workshop not found
-          </div>
-        </main>
+        <div style={{textAlign: 'center', padding: '20px'}}>
+          Workshop not found
+        </div>
       );
     }
 
     return (
-      <main className='scrollable'>
-        <div style={{maxWidth: 1200, margin: '0 auto', padding: '32px 20px', paddingBottom: '100px'}}>
-          {/* Workshop Info */}
-          <section style={{
-            marginBottom: 24,
-            padding: 20,
-            borderRadius: 12,
-            backgroundColor: theme.colors.white,
-            boxShadow: '0 4px 15px rgba(37, 73, 150, 0.1)',
-          }}>
-            <div style={{display: 'flex', gap: 16}}>
+      <main className='scrollable' style={{paddingBottom: 100}}>
+        <div style={{maxWidth: 800, margin: '0 auto', padding: '20px'}}>
+          {/* Workshop Details */}
+          <section style={{marginBottom: 32}}>
+            <div style={{display: 'flex', alignItems: 'center', marginBottom: 20}}>
               <div style={{
                 position: 'relative',
-                width: 120,
-                height: 80,
-                borderRadius: 8,
+                width: 100,
+                height: 100,
+                borderRadius: 12,
                 overflow: 'hidden',
-                flexShrink: 0,
+                marginRight: 16,
+                boxShadow: '0 4px 15px rgba(37, 73, 150, 0.1)',
               }}>
                 <Image
-                  src={`${URLS.IMAGE_URL}${workshop.image}`}
+                  src={workshop.image ? `${URLS.IMAGE_URL}${workshop.image}` : `${URLS.IMAGE_URL}/public/img/workshop/placeholder.png`}
                   alt={workshop.name}
-                  width={120}
-                  height={80}
-                  style={{objectFit: 'cover'}}
+                  layout="fill"
+                  objectFit="cover"
                 />
               </div>
               <div>
-                <text.H3 style={{marginBottom: 8}}>{workshop.name}</text.H3>
+                <text.H3 style={{color: theme.colors.mainColor, marginBottom: 8}}>
+                  {workshop.name}
+                </text.H3>
                 <text.T14 style={{color: theme.colors.secondaryTextColor}}>
-                  {workshop.type === 0 ? 'Regular Workshop' : 'Premium Workshop'}
+                  Price: ₹{workshop.type === 0 ? workshop.price : workshop.price_2}
                 </text.T14>
+                {workshop.cut_price && (
+                  <text.T12 style={{color: theme.colors.secondaryTextColor, textDecoration: 'line-through'}}>
+                    MRP: ₹{workshop.cut_price}
+                  </text.T12>
+                )}
               </div>
             </div>
           </section>
 
-          {/* Coupon Section */}
           {renderCouponSection()}
-
-          {/* Price Details */}
           {renderPriceDetails()}
-        </div>
 
-        {/* Sticky CTA Button */}
-        <div style={{
-          position: 'fixed',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          padding: '16px 20px',
-          backgroundColor: theme.colors.white,
-          boxShadow: '0 -4px 20px rgba(37, 73, 150, 0.1)',
-          zIndex: 1000,
-        }}>
-          <div style={{maxWidth: 1200, margin: '0 auto'}}>
-            <button
-              onClick={handleProceedToPayment}
-              disabled={isProcessingPayment}
-              style={{
-                width: '100%',
-                padding: '16px',
-                borderRadius: 12,
-                backgroundColor: theme.colors.mainColor,
-                color: theme.colors.white,
-                ...theme.fonts.Lato_700Bold,
-                fontSize: 16,
-                boxShadow: '0 4px 15px rgba(37, 73, 150, 0.2)',
-                cursor: isProcessingPayment ? 'not-allowed' : 'pointer',
-                border: 'none',
-              }}
-            >
-              {isProcessingPayment ? 'Processing...' : `Proceed to Payment - ₹${calculateFinalPrice()}`}
-            </button>
-          </div>
+          <components.Button
+            label={isProcessingPayment ? 'Processing Payment...' : `Pay Now - ₹${calculateFinalPrice()}`}
+            onClick={handleProceedToPayment}
+            style={{marginBottom: 20, width: '100%'}}
+            disabled={isProcessingPayment || !cart}
+          />
         </div>
-
-        {/* Multiple Accounts Modal */}
-        {showMultipleAccounts && renderMultipleAccountsModal()}
+        {renderMultipleAccountsModal()}
       </main>
     );
   };

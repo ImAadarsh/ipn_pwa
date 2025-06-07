@@ -320,27 +320,7 @@ export const SignUp: React.FC = () => {
           </text.T16>
         </section>
 
-        {/* SOCIALS */}
-        <section className='container' style={{marginBottom: 30}}>
-          <ul
-            style={{
-              display: 'flex',
-              flexDirection: 'row',
-              gap: 10,
-              justifyContent: 'center',
-            }}
-          >
-            <li className='clickable'>
-              <components.Facebook />
-            </li>
-            <li className='clickable'>
-              <components.Twitter />
-            </li>
-            <li className='clickable'>
-              <components.Google />
-            </li>
-          </ul>
-        </section>
+
 
         {renderExistingAccountsModal()}
       </main>

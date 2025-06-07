@@ -7,6 +7,7 @@ import {text} from '../../text';
 import {Routes} from '../../routes';
 import {theme} from '../../constants';
 import {components} from '../../components';
+import {LoadingSkeleton} from '../../components/LoadingSkeleton';
 
 interface Coupon {
   id: number;
@@ -53,6 +54,7 @@ export const MyCoupons: React.FC = () => {
 
   const fetchCoupons = async () => {
     try {
+      setIsLoading(true);
       const response = await fetch('/api/coupons');
       const data = await response.json();
 

@@ -7,6 +7,7 @@ import {text} from '../../text';
 import {Routes} from '../../routes';
 import {theme} from '../../constants';
 import {components} from '../../components';
+import {LoadingSkeleton} from '../../components/LoadingSkeleton';
 
 interface User {
   id: number;
@@ -59,8 +60,10 @@ export const Transactions: React.FC = () => {
 
   const fetchTransactions = async () => {
     try {
+      setIsLoading(true);
       if (!user) {
         console.log('No user data available for fetching transactions');
+        setIsLoading(false);
         return;
       }
 
@@ -100,11 +103,7 @@ export const Transactions: React.FC = () => {
 
   const renderContent = () => {
     if (isLoading) {
-      return (
-        <div style={{textAlign: 'center', padding: '20px'}}>
-          Loading transactions...
-        </div>
-      );
+      return <LoadingSkeleton />;
     }
 
     if (error) {

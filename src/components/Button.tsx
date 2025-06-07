@@ -12,6 +12,7 @@ type Props = {
   style?: React.CSSProperties;
   colorScheme?: 'primary' | 'secondary';
   containerStyle?: React.CSSProperties;
+  disabled?: boolean;
 };
 
 export const Button: React.FC<Props> = ({
@@ -21,6 +22,7 @@ export const Button: React.FC<Props> = ({
   href = '#',
   containerStyle,
   colorScheme = 'primary',
+  disabled,
 }) => {
   if (href && !onClick) {
     return (
@@ -45,6 +47,13 @@ export const Button: React.FC<Props> = ({
                 : theme.colors.mainColor,
             ...theme.fonts.Lato,
             ...style,
+            opacity: disabled ? 0.7 : 1,
+            cursor: disabled ? 'not-allowed' : 'pointer',
+          }}
+          onClick={(e) => {
+            if (disabled) {
+              e.preventDefault();
+            }
           }}
         >
           {label}
@@ -57,6 +66,7 @@ export const Button: React.FC<Props> = ({
     <div style={{width: '100%', ...containerStyle}}>
       <button
         onClick={onClick}
+        disabled={disabled}
         style={{
           width: '100%',
           height: 60,

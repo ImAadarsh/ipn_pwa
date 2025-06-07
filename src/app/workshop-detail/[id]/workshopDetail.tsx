@@ -11,6 +11,7 @@ import {URLS} from '../../../config';
 import {components} from '../../../components';
 import {utils} from '../../../utils';
 import {svg} from '../../../svg';
+import {LoadingSkeleton} from '../../../components/LoadingSkeleton';
 
 interface Feedback {
   id: number;
@@ -741,13 +742,7 @@ export const CourseDetails: React.FC<Props> = ({id}) => {
 
   const renderContent = () => {
     if (loading) {
-      return (
-        <main className='scrollable container' style={{paddingTop: 20, paddingBottom: 20}}>
-          <div className="flex justify-center items-center min-h-[200px]">
-            Loading...
-          </div>
-        </main>
-      );
+      return <LoadingSkeleton />;
     }
 
     if (!workshop) {

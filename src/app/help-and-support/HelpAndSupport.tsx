@@ -8,6 +8,7 @@ import {text} from '../../text';
 import {Routes} from '../../routes';
 import {theme} from '../../constants';
 import {components} from '../../components';
+import {LoadingSkeleton} from '../../components/LoadingSkeleton';
 
 interface FAQ {
   id: number;
@@ -97,6 +98,7 @@ export const HelpAndSupport: React.FC = () => {
 
   const fetchFaqs = async () => {
     try {
+      setIsLoading(true);
       const response = await fetch('/api/faqs');
       const data = await response.json();
 
@@ -147,9 +149,7 @@ export const HelpAndSupport: React.FC = () => {
         style={{paddingTop: '10px', paddingBottom: '20px'}}
       >
         {isLoading ? (
-          <div style={{textAlign: 'center', padding: '20px'}}>
-            <text.T16>Loading FAQs...</text.T16>
-          </div>
+          <LoadingSkeleton />
         ) : error ? (
           <div style={{textAlign: 'center', padding: '20px', color: 'red'}}>
             <text.T16>{error}</text.T16>
