@@ -3,10 +3,10 @@ import mysql, {RowDataPacket} from 'mysql2/promise';
 
 // Database configuration
 const dbConfig = {
-  host: '82.180.142.204',
-  user: 'u954141192_ipnacademy',
-  password: 'x?OR+Q2/D',
-  database: 'u954141192_ipnacademy'
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
 };
 
 interface Transaction extends RowDataPacket {

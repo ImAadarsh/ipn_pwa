@@ -11,7 +11,6 @@ import {Routes} from '../routes';
 import {theme} from '../constants';
 import type {CourseType} from '../types';
 import {course as elements} from '../course';
-import { URLS } from '@/config';
 
 type Props = {
   index: number;

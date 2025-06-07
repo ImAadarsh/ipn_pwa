@@ -5,11 +5,9 @@ import {useRouter} from 'next/navigation';
 import Image from 'next/image';
 
 import {text} from '../../../text';
-import {Routes} from '../../../routes';
 import {theme} from '../../../constants';
 import {URLS} from '../../../config';
 import {components} from '../../../components';
-import {utils} from '../../../utils';
 import {svg} from '../../../svg';
 
 interface Workshop {
@@ -47,29 +45,6 @@ interface Cart {
   verify_token: string | null;
   url: string | null;
   webhook: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-interface Payment {
-  id: number;
-  user_id: number;
-  workshop_id: number;
-  payment_id: string | null;
-  amount: number;
-  order_id: string | null;
-  mail_send: number;
-  last_mail: string | null;
-  verify_token: string | null;
-  url: string | null;
-  payment_status: number;
-  cpd: number;
-  coupon_code: string | null;
-  review: number;
-  is_school: number;
-  school_id: number | null;
-  report_id: number | null;
-  duration: number | null;
   created_at: string;
   updated_at: string;
 }

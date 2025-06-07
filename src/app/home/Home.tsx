@@ -5,7 +5,7 @@ import Image from 'next/image';
 import React, {useEffect, useState} from 'react';
 import {Swiper, SwiperSlide} from 'swiper/react';
 import {useRouter} from 'next/navigation';
-import {Autoplay, Pagination, Navigation} from 'swiper/modules';
+import {Autoplay, Pagination} from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/pagination';
 import 'swiper/css/navigation';
@@ -21,7 +21,6 @@ import {LoadingSkeleton} from '../../components/LoadingSkeleton';
 
 import type {CourseType} from '../../types';
 import type {CategoryType} from '../../types';
-import type {CarouselType} from '../../types';
 import {course as elements} from '../../course';
 
 type Props = {
@@ -70,39 +69,6 @@ interface Workshop {
   trainer_description: string;
 }
 
-const SearchSvg: React.FC = () => {
-  return (
-    <svg xmlns='http://www.w3.org/2000/svg' width={14} height={14} fill='none'>
-      <path
-        fill='#666'
-        fillRule='evenodd'
-        d='M6.417 2.188a4.23 4.23 0 1 0 0 8.458 4.23 4.23 0 0 0 0-8.459ZM1.313 6.417a5.104 5.104 0 1 1 10.208 0 5.104 5.104 0 0 1-10.209 0Z'
-        clipRule='evenodd'
-      />
-      <path
-        fill='#666'
-        fillRule='evenodd'
-        d='M9.3 9.3a.583.583 0 0 1 .825 0l2.537 2.537a.583.583 0 0 1-.825.825L9.3 10.125a.583.583 0 0 1 0-.825Z'
-        clipRule='evenodd'
-      />
-    </svg>
-  );
-};
-
-const carousel: CarouselType[] = [
-  {
-    id: 1,
-    image: `${URLS.MAIN_URL}/assets/banners/01.png`,
-  },
-  {
-    id: 2,
-    image: `${URLS.MAIN_URL}/assets/banners/01.png`,
-  },
-  {
-    id: 3,
-    image: `${URLS.MAIN_URL}/assets/banners/01.png`,
-  },
-];
 
 const categoryGradients = [
   `linear-gradient(45deg, ${theme.colors.mainColor}, ${theme.colors.accentColor})`,
@@ -110,14 +76,6 @@ const categoryGradients = [
   `linear-gradient(45deg, ${theme.colors.coralRed}, ${theme.colors.mainColor})`,
   `linear-gradient(45deg, ${theme.colors.mainOrange}, ${theme.colors.persianRose})`,
   `linear-gradient(45deg, ${theme.colors.accentColor}, ${theme.colors.coralRed})`,
-];
-
-const categoryImages = [
-  `${URLS.IMAGE_URL}/assets/categories/education.png`,
-  `${URLS.IMAGE_URL}/assets/categories/technology.png`,
-  `${URLS.IMAGE_URL}/assets/categories/science.png`,
-  `${URLS.IMAGE_URL}/assets/categories/arts.png`,
-  `${URLS.IMAGE_URL}/assets/categories/business.png`,
 ];
 
 export const Home: React.FC<Props> = ({courses, categories: initialCategories}) => {

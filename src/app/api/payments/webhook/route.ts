@@ -39,8 +39,6 @@ export async function POST(request: Request) {
       );
     }
 
-    const payment = paymentRows[0];
-
     // Start transaction
     await connection.beginTransaction();
 

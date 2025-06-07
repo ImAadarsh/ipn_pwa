@@ -1,7 +1,4 @@
 import React from 'react';
-import Link from 'next/link';
-
-import {svg} from '../svg';
 import {text} from '../text';
 
 type Props = {

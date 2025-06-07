@@ -4,7 +4,7 @@ import Image from 'next/image';
 import React, {useEffect, useState} from 'react';
 import {useRouter} from 'next/navigation';
 
-import {svg} from '../../svg';
+
 import {URLS} from '../../config';
 import {Routes} from '../../routes';
 import {theme} from '../../constants';

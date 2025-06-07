@@ -1,15 +1,12 @@
 'use client';
 
-import React, {useEffect, useState} from 'react';
+import React from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 
 import {text} from '../../text';
 import {Routes} from '../../routes';
 import {theme} from '../../constants';
 import {components} from '../../components';
-
-import type {CategoryType} from '../../types';
 
 interface Category {
   id: number;
@@ -25,31 +22,11 @@ const categoryGradients = [
   `linear-gradient(45deg, ${theme.colors.accentColor}, ${theme.colors.coralRed})`,
 ];
 
-export const CategoryGrid: React.FC = () => {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
+interface CategoryGridProps {
+  categories: Category[];
+}
 
-  useEffect(() => {
-    fetchCategories();
-  }, []);
-
-  const fetchCategories = async () => {
-    try {
-      const response = await fetch('/api/categories/list');
-      const data = await response.json();
-      
-      if (data.success) {
-        setCategories(data.categories);
-      } else {
-        console.error('Failed to fetch categories:', data.message);
-      }
-    } catch (error) {
-      console.error('Error fetching categories:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+export const CategoryGrid: React.FC<CategoryGridProps> = ({ categories }) => {
   const renderBackground = () => {
     return <components.Background version={1} />;
   };
@@ -59,14 +36,6 @@ export const CategoryGrid: React.FC = () => {
   };
 
   const renderContent = () => {
-    if (loading) {
-      return (
-        <div style={{padding: 20, textAlign: 'center'}}>
-          <text.T14>Loading categories...</text.T14>
-        </div>
-      );
-    }
-
     if (!categories.length) {
       return (
         <div style={{padding: 20, textAlign: 'center'}}>

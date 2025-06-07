@@ -20,7 +20,6 @@ export const CourseCompleted: React.FC = () => {
   const [comment, setComment] = useState('');
   const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
-  const [user, setUser] = useState<any>(null); // State to store user data
 
   useEffect(() => {
     document.body.style.backgroundColor = theme.colors.white;

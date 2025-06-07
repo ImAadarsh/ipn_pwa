@@ -1,11 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import React, {useEffect, useState} from 'react';
 import {Swiper, SwiperSlide} from 'swiper/react';
 
-import {svg} from '../../svg';
+
 import {text} from '../../text';
 import {items} from '../../items';
 import {Routes} from '../../routes';
@@ -35,37 +34,6 @@ const SearchSvg: React.FC = () => {
     </svg>
   );
 };
-
-const tags = [
-  {
-    id: 1,
-    name: 'Java',
-  },
-  {
-    id: 2,
-    name: 'Python',
-  },
-  {
-    id: 3,
-    name: 'Marketing',
-  },
-  {
-    id: 4,
-    name: 'App',
-  },
-  {
-    id: 5,
-    name: 'Database',
-  },
-  {
-    id: 6,
-    name: 'Analytics',
-  },
-  {
-    id: 7,
-    name: 'UI/UX',
-  },
-];
 
 const months = [
   {value: '', label: 'All Months'},

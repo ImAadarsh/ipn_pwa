@@ -105,10 +105,6 @@ export const MyCourses: React.FC = () => {
     }
   };
 
-  const handleCertificateClick = (orderId: string) => {
-    window.open(`https://ipnacademy.in/user/certificate.php?id=${orderId}`, '_blank');
-  };
-
   const renderImageBackground = () => {
     return <components.Background version={1} />;
   };

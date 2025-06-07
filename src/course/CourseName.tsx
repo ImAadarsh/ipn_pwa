@@ -20,7 +20,7 @@ export const CourseName: React.FC<Props> = ({
 }) => {
   return (
     <text.H6 style={style} numberOfLines={numberOfLines}>
-      {shortName ? course.shortName : course.name}
+      {course.name}
     </text.H6>
   );
 };

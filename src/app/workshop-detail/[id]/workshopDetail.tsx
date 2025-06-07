@@ -9,7 +9,6 @@ import {Routes} from '../../../routes';
 import {theme} from '../../../constants';
 import {URLS} from '../../../config';
 import {components} from '../../../components';
-import {course as elements} from '../../../course';
 import {utils} from '../../../utils';
 import {svg} from '../../../svg';
 

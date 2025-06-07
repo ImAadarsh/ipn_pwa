@@ -4,7 +4,6 @@ import React, {useEffect, useState} from 'react';
 import {useRouter} from 'next/navigation';
 
 import {text} from '../../../text';
-import {Routes} from '../../../routes';
 import {theme} from '../../../constants';
 import {components} from '../../../components';
 import {course as elements} from '../../../course';
