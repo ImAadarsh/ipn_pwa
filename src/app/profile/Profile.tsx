@@ -131,6 +131,39 @@ const LogOutSvg: React.FC = () => {
   );
 };
 
+const menu = [
+  {
+    id: 1,
+    title: 'Wishlist',
+    icon: <HeartSvg />,
+    url: Routes.MY_WISHLIST,
+  },
+  {
+    id: 2,
+    title: 'Coupons',
+    icon: <GiftSvg />,
+    url: Routes.MY_COUPONS,
+  },
+  {
+    id: 3,
+    title: 'Transactions',
+    icon: <DocumentSvg />,
+    url: Routes.TRANSACTIONS,
+  },
+  {
+    id: 4,
+    title: 'Help & Support',
+    icon: <HelpCircleSvg />,
+    url: Routes.HELP_AND_SUPPORT,
+  },
+  {
+    id: 5,
+    title: 'Privacy Policy',
+    icon: <DocumentSvg />,
+    url: Routes.PRIVACY_POLICY,
+  },
+];
+
 export const Profile: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
 
@@ -224,31 +257,14 @@ export const Profile: React.FC = () => {
         {/* MENU */}
         <section>
           <div className='container'>
-            <items.ProfileItem
-              label='Wishlist'
-              icon={<HeartSvg />}
-              href={Routes.MY_WISHLIST}
-            />
-            <items.ProfileItem
-              label='Coupons'
-              href={Routes.MY_COUPONS}
-              icon={<GiftSvg />}
-            />
-            <items.ProfileItem
-              label='Wallet'
-              icon={<CreditCardSvg />}
-              href={Routes.MY_WALLET}
-            />
-            <items.ProfileItem
-              label='Help & Support'
-              href={Routes.HELP_AND_SUPPORT}
-              icon={<HelpCircleSvg />}
-            />
-            <items.ProfileItem
-              label='Privacy Policy'
-              href={Routes.PRIVACY_POLICY}
-              icon={<DocumentSvg />}
-            />
+            {menu.map((item) => (
+              <items.ProfileItem
+                key={item.id}
+                label={item.title}
+                icon={item.icon}
+                href={item.url}
+              />
+            ))}
             <Link href={Routes.SIGN_IN} onClick={handleSignOut}>
               <items.ProfileItem
                 label='Sign out'

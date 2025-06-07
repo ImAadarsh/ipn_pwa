@@ -9,42 +9,15 @@ import {Routes} from '../../routes';
 import {theme} from '../../constants';
 import {components} from '../../components';
 
-const FAQData = [
-  {
-    id: 1,
-    title: 'How do I send a wire transfer?',
-    content:
-      'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
-  },
-  {
-    id: 2,
-    title: 'Is there any fee for receiving a wire transfer?',
-    content:
-      'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
-  },
-  {
-    id: 3,
-    title: 'How does the identification code process work?',
-    content:
-      'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
-  },
-  {
-    id: 4,
-    title: 'Does Fingerprint login work for all devices?',
-    content:
-      'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
-  },
-  {
-    id: 5,
-    title: 'How to send an invoice?',
-    content:
-      'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
-  },
-];
+interface FAQ {
+  id: number;
+  title: string;
+  content: string;
+}
 
 const OpenSvg = () => {
   return (
-    <svg xmlns='http://www.w3.org/2000/svg' width={11} height={6} fill='none'>
+    <svg xmlns='http://www.w3.org/2000/svg' width={20} height={6} fill='none'>
       <g>
         <path
           stroke='#111'
@@ -65,7 +38,7 @@ const OpenSvg = () => {
 
 const CloseSvg = () => {
   return (
-    <svg xmlns='http://www.w3.org/2000/svg' width={11} height={6} fill='none'>
+    <svg xmlns='http://www.w3.org/2000/svg' width={20} height={6} fill='none'>
       <g>
         <path
           stroke='#111'
@@ -112,13 +85,33 @@ const menu = [
 ];
 
 export const HelpAndSupport: React.FC = () => {
-  const [openAccordionIndex, setOpenAccordionIndex] = useState<number | null>(
-    null
-  );
+  const [openAccordionIndex, setOpenAccordionIndex] = useState<number | null>(null);
+  const [faqs, setFaqs] = useState<FAQ[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     document.body.style.backgroundColor = '#fff';
+    fetchFaqs();
   }, []);
+
+  const fetchFaqs = async () => {
+    try {
+      const response = await fetch('/api/faqs');
+      const data = await response.json();
+
+      if (data.success) {
+        setFaqs(data.faqs);
+      } else {
+        setError(data.message || 'Failed to fetch FAQs');
+      }
+    } catch (error) {
+      setError('An error occurred while fetching FAQs');
+      console.error('Error fetching FAQs:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const toggleAccordion = (index: number) => {
     if (openAccordionIndex === index) {
@@ -153,52 +146,63 @@ export const HelpAndSupport: React.FC = () => {
         className='scrollable container'
         style={{paddingTop: '10px', paddingBottom: '20px'}}
       >
-        <ul>
-          {FAQData.map((faq, index) => (
-            <li
-              key={index}
-              style={{
-                marginBottom: '10px',
-              }}
-            >
-              <details
-                onToggle={() => toggleAccordion(index)}
+        {isLoading ? (
+          <div style={{textAlign: 'center', padding: '20px'}}>
+            <text.T16>Loading FAQs...</text.T16>
+          </div>
+        ) : error ? (
+          <div style={{textAlign: 'center', padding: '20px', color: 'red'}}>
+            <text.T16>{error}</text.T16>
+          </div>
+        ) : (
+          <ul>
+            {faqs.map((faq, index) => (
+              <li
+                key={faq.id}
                 style={{
-                  ...btnStyle,
-                  display: 'flex',
-                  flexDirection: 'column',
+                  marginBottom: '10px',
                 }}
               >
-                <summary
+                <details
+                  onToggle={() => toggleAccordion(index)}
                   style={{
-                    width: '100%',
+                    ...btnStyle,
                     display: 'flex',
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
+                    flexDirection: 'column',
                   }}
-                  className='clickable'
                 >
-                  <text.H6 style={{marginRight: 10}}>{faq.title}</text.H6>
-                  {openAccordionIndex === index ? <OpenSvg /> : <CloseSvg />}
-                </summary>
-                <div style={{paddingTop: 14}}>
-                  <p
-                    className='element'
+                  <summary
                     style={{
-                      ...theme.fonts.Lato,
-                      fontSize: 14,
-                      lineHeight: 1.7,
-                      color: theme.colors.bodyTextColor,
+                      width: '100%',
+                      display: 'flex',
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
                     }}
+                    className='clickable'
                   >
-                    {faq.content}
-                  </p>
-                </div>
-              </details>
-            </li>
-          ))}
-        </ul>
+                    <text.H6 style={{marginRight: 10}}>{faq.title}</text.H6>
+                    {openAccordionIndex === index ? <OpenSvg /> : <CloseSvg />}
+                  </summary>
+                  <div style={{paddingTop: 14}}>
+                    <p
+                      className='element'
+                      style={{
+                        ...theme.fonts.Lato,
+                        fontSize: 14,
+                        lineHeight: 1.7,
+                        color: theme.colors.bodyTextColor,
+                      }}
+                    >
+                      {faq.content}
+                    </p>
+                  </div>
+                </details>
+              </li>
+            ))}
+          </ul>
+        )}
+
         <div
           style={{
             marginTop: 24,

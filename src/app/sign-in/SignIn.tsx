@@ -39,6 +39,13 @@ export const SignIn: React.FC = () => {
   const [isVerifying, setIsVerifying] = useState(false);
 
   useEffect(() => {
+    // Check if user is already logged in
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      router.push(Routes.HOME);
+      return;
+    }
+
     document.body.style.backgroundColor = theme.colors.white;
 
     // Load the external script
@@ -142,8 +149,8 @@ export const SignIn: React.FC = () => {
           </section>
 
           {/* PHONE VERIFICATION */}
-          <section style={{marginBottom: 20}}>
-            <div className="pe_signin_button" data-client-id="15695407177920574360"></div>
+          <section style={{marginBottom: 20, display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
+            <div className="pe_signin_button" data-client-id="15695407177920574360" style={{display: 'flex', justifyContent: 'center'}}></div>
             {verificationStatus && (
               <text.T16 
                 style={{
