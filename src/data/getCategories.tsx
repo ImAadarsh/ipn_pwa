@@ -6,5 +6,5 @@ export async function getCategories() {
     throw new Error(`HTTP error! status: ${response.status}`);
   }
   const json = await response.json();
-  return json.categories;
+  return json.success ? json.categories : [];
 }

@@ -6,5 +6,5 @@ export async function getCourses() {
     throw new Error(`HTTP error! status: ${response.status}`);
   }
   const json = await response.json();
-  return json.courses;
+  return json.success ? json.workshops : [];
 }

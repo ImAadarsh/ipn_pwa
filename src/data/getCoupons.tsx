@@ -6,5 +6,5 @@ export async function getCoupons() {
     throw new Error(`HTTP error! status: ${response.status}`);
   }
   const json = await response.json();
-  return json.coupons;
+  return json.success ? json.coupons : [];
 }
