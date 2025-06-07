@@ -1,4 +1,4 @@
-const MAIN_URL = `https://nuton-data.vercel.app/`;
+const MAIN_URL = `https://app.ipnacademy.in/`;
 const IMAGE_URL = `https://api.ipnacademy.in/storage/app/`;
 
 export const GET_COUPONS = `${MAIN_URL}api/coupons.json`;
