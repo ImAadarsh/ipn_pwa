@@ -4,6 +4,7 @@ import type {Metadata, Viewport} from 'next';
 import {theme} from '../constants';
 import {Onboarding} from './Onboarding';
 import {URLS} from '../config';
+import {GoogleAnalytics} from '../components/GoogleAnalytics';
 
 export const metadata: Metadata = {
   title: 'IPN Academy - Your Gateway to Professional Excellence',
@@ -58,5 +59,10 @@ export const viewport: Viewport = {
 };
 
 export default function StartPage() {
-  return <Onboarding />;
+  return (
+    <>
+      <GoogleAnalytics />
+      <Onboarding />
+    </>
+  );
 }
