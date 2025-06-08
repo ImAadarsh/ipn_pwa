@@ -466,11 +466,11 @@ export const BetterTogether: React.FC = () => {
             display: 'inline-block',
             marginBottom: '2rem'
           }}>
-            <h2 style={{
+          <h2 style={{
               fontSize: 'clamp(1.8rem, 5vw, 2.5rem)',
               fontWeight: 700,
               color: '#1e40af',
-              margin: '0 0 1rem',
+            margin: '0 0 1rem',
               lineHeight: 1.3,
             }}>
               Empowering Educators,
@@ -496,14 +496,14 @@ export const BetterTogether: React.FC = () => {
         <div id="live-ticker">
           <div className="ticker-content">
             <i className="fa fa-bolt ticker-icon"></i>
-            <span style={{ 
+            <span style={{
               color: '#1e40af',
               fontWeight: 600,
               fontSize: '1.2rem'
             }}>
               Join {formatNumber(stats?.total_users_count || 0)}+ Teachers Community Globally!
             </span>
-          </div>
+        </div>
         </div>
 
         <div className="stats-grid">

@@ -5,8 +5,8 @@ import {URLS} from '../../../config';
 
 async function getWorkshopData(id: string) {
   try {
-    console.log(`Fetching workshop data for ID: ${id} from ${URLS.MAIN_URL}/api/workshop/${id}`);
-    const response = await fetch(`${URLS.MAIN_URL}/api/workshop/${id}`);
+    // console.log(`Fetching workshop data for ID: ${id} from ${URLS.MAIN_URL}/api/workshops/${id}`);
+    const response = await fetch(`${URLS.MAIN_URL}/api/workshops/${id}`);
     
     if (!response.ok) {
       console.error(`HTTP error! status: ${response.status}`);
