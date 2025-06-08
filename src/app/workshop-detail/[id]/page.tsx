@@ -8,7 +8,9 @@ const BASE_URL = process.env.NEXT_PUBLIC_MAIN_URL || 'https://app.ipnacademy.in'
 async function getWorkshopData(id: string) {
   try {
     console.log(`Fetching workshop data for ID: ${id} from ${URLS.MAIN_URL}/api/workshops/${id}`);
-    const response = await fetch(`${URLS.MAIN_URL}/api/workshops/${id}`);
+    const response = await fetch(`${URLS.MAIN_URL}/api/workshops/${id}`, {
+      next: { revalidate: 0 }
+    });
     
     if (!response.ok) {
       console.error(`HTTP error! status: ${response.status}`);
@@ -52,7 +54,7 @@ export async function generateMetadata({params}: {params: {id: string}}): Promis
       siteName: 'IPN Academy',
       images: [
         {
-          url: `${URLS.IMAGE_URL}${workshop.image}`,
+          url: `${URLS.IMAGE_URL}${workshop.image.startsWith('public/') ? workshop.image : `public/img/workshop/${workshop.image}`}`,
           width: 1200,
           height: 630,
           alt: workshop.name,
@@ -65,7 +67,7 @@ export async function generateMetadata({params}: {params: {id: string}}): Promis
       card: 'summary_large_image',
       title: `${workshop.name} | IPN Academy Workshop`,
       description: workshop.description || `Join our ${workshop.name} workshop to enhance your professional skills.`,
-      images: [`${URLS.IMAGE_URL}${workshop.image}`],
+      images: [`${URLS.IMAGE_URL}${workshop.image.startsWith('public/') ? workshop.image : `public/img/workshop/${workshop.image}`}`],
     },
     robots: {
       index: true,

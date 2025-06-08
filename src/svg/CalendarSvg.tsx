@@ -1,6 +1,6 @@
 import React from 'react';
 
-export const CalendarSvg: React.FC = () => {
+export const CalendarSvg: React.FC<{color?: string}> = ({color}) => {
   return (
     <svg
       xmlns='http://www.w3.org/2000/svg'
@@ -17,7 +17,7 @@ export const CalendarSvg: React.FC = () => {
         d='M.5.5h49v49H.5z'
       />
       <path
-        stroke='#222'
+        stroke={color || '#222'}
         strokeLinecap='round'
         strokeLinejoin='round'
         strokeWidth={1.5}

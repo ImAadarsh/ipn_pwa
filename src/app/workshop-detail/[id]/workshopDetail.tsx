@@ -3,6 +3,7 @@
 import React, {useEffect, useState} from 'react';
 import Image from 'next/image';
 import {useRouter} from 'next/navigation';
+import { FaRegClock, FaRegCalendarAlt, FaUsers, FaRegStar, FaCentos, FaTrophy } from 'react-icons/fa';
 
 import {text} from '../../../text';
 import {Routes} from '../../../routes';
@@ -778,26 +779,13 @@ export const CourseDetails: React.FC<Props> = ({id}) => {
                 padding: '5px',
               }}
             />
-            <hr
-            style={{
-              marginTop: '5px'
-            }}
-            />
-            <hr
-            style={{
-              marginTop: '1px'
-            }}
-            />
-             <hr
-            style={{
-              marginTop: '1px'
-            }}
-            />
-             <hr
-            style={{
-              marginTop: '1px'
-            }}
-            />
+            <div style={{
+              height: '4px',
+              width: '100%',
+              background: `linear-gradient(90deg, ${theme.colors.mainColor}00, ${theme.colors.mainColor}80, ${theme.colors.mainColor}00)`,
+              marginTop: '10px',
+              borderRadius: '2px',
+            }} />
           </div>
         </section>
 
@@ -814,14 +802,29 @@ export const CourseDetails: React.FC<Props> = ({id}) => {
             <div style={{...utils.rowCenter(), marginBottom: 16}}>
               {workshop.is_premium === 1 && (
                 <div style={{
-                  padding: '4px 12px',
+                  padding: '6px 14px',
                   borderRadius: 30,
-                  backgroundColor: theme.colors.mainOrange,
+                  background: 'linear-gradient(45deg, #FFDB58, #FF8C00)',
                   marginRight: 12,
                   ...theme.fonts.Lato_700Bold,
-                  fontSize: 12
+                  fontSize: 13,
+                  color: theme.colors.bodyTextColor,
+                  boxShadow: '0 4px 15px rgba(255, 215, 0, 0.4)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  border: `1px solid ${theme.colors.white}50`,
+                  animation: 'premiumPulse 2s infinite alternate',
                 }}>
-                  Premium Workshop
+                  <style jsx>{`
+                    @keyframes premiumPulse {
+                      0% { transform: scale(1); box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4); }
+                      50% { transform: scale(1.02); box-shadow: 0 6px 20px rgba(255, 215, 0, 0.6); }
+                      100% { transform: scale(1); box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4); }
+                    }
+                  `}</style>
+                  <FaTrophy size={14} color={theme.colors.bodyTextColor} style={{textShadow: '0 1px 2px rgba(0,0,0,0.2)'}} />
+                  <span style={{textShadow: '0 1px 2px rgba(0,0,0,0.2)'}}>Premium Workshop</span>
                 </div>
               )}
               {workshop.category_name && (
@@ -865,11 +868,11 @@ export const CourseDetails: React.FC<Props> = ({id}) => {
                 <div style={{
                   padding: 6,
                   borderRadius: 12,
-                  backgroundColor: theme.colors.white,
+                  backgroundColor: 'transparent',
                   marginRight: 12,
-                  boxShadow: '0 2px 8px rgba(37, 73, 150, 0.1)',
+                  border: `1px solid ${theme.colors.secondaryTextColor}20`,
                 }}>
-                  <svg.ClockSvg color={theme.colors.mainColor} />
+                  <FaRegClock size={24} color={theme.colors.lightGrey} />
                 </div>
                 <div>
                   <text.T12 style={{color: theme.colors.secondaryTextColor}}>Duration</text.T12>
@@ -882,11 +885,28 @@ export const CourseDetails: React.FC<Props> = ({id}) => {
                 <div style={{
                   padding: 6,
                   borderRadius: 12,
-                  backgroundColor: theme.colors.white,
+                  backgroundColor: 'transparent',
                   marginRight: 12,
-                  boxShadow: '0 2px 8px rgba(37, 73, 150, 0.1)',
+                  border: `1px solid ${theme.colors.secondaryTextColor}20`,
                 }}>
-                  <svg.CourseUserSvg />
+                  <FaRegCalendarAlt size={24} color={theme.colors.lightGrey} />
+                </div>
+                <div>
+                  <text.T12 style={{color: theme.colors.secondaryTextColor}}>Date & Time</text.T12>
+                  <text.T14 style={{color: theme.colors.mainColor, ...theme.fonts.Lato_700Bold}}>
+                    {new Date(workshop.start_date).toLocaleDateString()} at {new Date(workshop.start_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </text.T14>
+                </div>
+              </div>
+              <div style={{...utils.rowCenter()}}>
+                <div style={{
+                  padding: 6,
+                  borderRadius: 12,
+                  backgroundColor: 'transparent',
+                  marginRight: 12,
+                  border: `1px solid ${theme.colors.secondaryTextColor}20`,
+                }}>
+                  <FaUsers size={24} color={theme.colors.lightGrey} />
                 </div>
                 <div>
                   <text.T12 style={{color: theme.colors.secondaryTextColor}}>Enrolled</text.T12>
@@ -899,11 +919,11 @@ export const CourseDetails: React.FC<Props> = ({id}) => {
                 <div style={{
                   padding: 6,
                   borderRadius: 12,
-                  backgroundColor: theme.colors.white,
+                  backgroundColor: 'transparent',
                   marginRight: 12,
-                  boxShadow: '0 2px 8px rgba(37, 73, 150, 0.1)',
+                  border: `1px solid ${theme.colors.secondaryTextColor}20`,
                 }}>
-                  <svg.StarSvg color={theme.colors.mainColor} />
+                  <FaRegStar size={24} color={theme.colors.lightGrey} />
                 </div>
                 <div>
                   <text.T12 style={{color: theme.colors.secondaryTextColor}}>Rating</text.T12>
@@ -917,16 +937,16 @@ export const CourseDetails: React.FC<Props> = ({id}) => {
                   <div style={{
                     padding: 6,
                     borderRadius: 12,
-                    backgroundColor: theme.colors.white,
+                    backgroundColor: 'transparent',
                     marginRight: 12,
-                    boxShadow: '0 2px 8px rgba(37, 73, 150, 0.1)',
+                    border: `1px solid ${theme.colors.secondaryTextColor}20`,
                   }}>
-                    <svg.ClockSvg color={theme.colors.mainColor} />
+                    <FaCentos size={24} color={theme.colors.lightGrey} />
                   </div>
                   <div>
-                    <text.T12 style={{color: theme.colors.secondaryTextColor}}>CPD Hours</text.T12>
+                    <text.T12 style={{color: theme.colors.secondaryTextColor}}>Certification</text.T12>
                     <text.T14 style={{color: theme.colors.mainColor, ...theme.fonts.Lato_700Bold}}>
-                      {workshop.cpd} Hours
+                      Yes ({workshop.cpd} CPD Hrs)
                     </text.T14>
                   </div>
                 </div>
