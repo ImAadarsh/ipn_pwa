@@ -79,6 +79,7 @@ export const CourseDetails: React.FC<Props> = ({id}) => {
   const [activeTab, setActiveTab] = useState<'description' | 'trainer' | 'reviews'>('description');
   const [showRegistration, setShowRegistration] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [isPurchased, setIsPurchased] = useState(false);
   const [registrationForm, setRegistrationForm] = useState({
     name: '',
     email: '',
@@ -95,6 +96,30 @@ export const CourseDetails: React.FC<Props> = ({id}) => {
     }
     fetchWorkshopDetails();
   }, [id]);
+
+  useEffect(() => {
+    if (user?.id && workshop?.id) {
+      checkPurchaseStatus();
+    }
+  }, [user?.id, workshop?.id]);
+
+  const checkPurchaseStatus = async () => {
+    if (!user || !workshop) return;
+
+    try {
+      const response = await fetch(`/api/check-purchase?userId=${user.id}&workshopId=${workshop.id}`);
+      const data = await response.json();
+
+      if (response.ok && data.isPurchased) {
+        setIsPurchased(true);
+      } else {
+        setIsPurchased(false);
+      }
+    } catch (error) {
+      console.error('Error checking purchase status:', error);
+      setIsPurchased(false);
+    }
+  };
 
   const fetchWorkshopDetails = async () => {
     try {
@@ -1039,20 +1064,22 @@ export const CourseDetails: React.FC<Props> = ({id}) => {
           <div style={{maxWidth: 1200, margin: '0 auto'}}>
             <button
               onClick={handleEnrollClick}
+              disabled={isPurchased}
               style={{
                 width: '100%',
                 padding: '16px',
                 borderRadius: 12,
-                backgroundColor: theme.colors.mainColor,
+                backgroundColor: isPurchased ? theme.colors.lightGrey : theme.colors.mainColor,
                 color: theme.colors.white,
                 ...theme.fonts.Lato_700Bold,
                 fontSize: 16,
                 boxShadow: '0 4px 15px rgba(37, 73, 150, 0.2)',
-                cursor: 'pointer',
+                cursor: isPurchased ? 'not-allowed' : 'pointer',
                 border: 'none',
+                opacity: isPurchased ? 0.7 : 1,
               }}
             >
-              {user ? 'Enroll Now' : 'Register & Enroll'} - ₹{workshop.type === 0 ? workshop.price : workshop.price_2}
+              {isPurchased ? 'You Already Purchased It' : (user ? 'Enroll Now' : 'Register & Enroll')} - ₹{workshop.type === 0 ? workshop.price : workshop.price_2}
             </button>
           </div>
         </div>

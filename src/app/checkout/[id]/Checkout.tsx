@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
+import { useRouter } from 'next/navigation';
 
 import {svg} from '../../../svg';
 import {text} from '../../../text';
@@ -14,19 +15,48 @@ import {course as elements} from '../../../course';
 
 import type {CourseType} from '../../../types';
 
+interface User {
+  id: number;
+}
+
 type Props = {
   id: string;
   courses: CourseType[];
 };
 
 export const Checkout: React.FC<Props> = ({courses, id}) => {
+  const router = useRouter();
   const course = courses.find((course) => String(course.id) === id);
+  const [user, setUser] = useState<User | null>(null);
 
   if (!course) return null;
 
   useEffect(() => {
     document.body.style.backgroundColor = theme.colors.white;
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      setUser(JSON.parse(userData));
+    }
   }, []);
+
+  useEffect(() => {
+    if (user && course) {
+      const checkPurchase = async () => {
+        try {
+          const response = await fetch(`/api/check-purchase?userId=${user.id}&workshopId=${course.id}`);
+          const data = await response.json();
+
+          if (data.success && data.isPurchased) {
+            // If purchased, redirect to workshop detail page
+            router.replace(Routes.COURSE_DETAILS.replace(':id', String(course.id)));
+          }
+        } catch (error) {
+          console.error('Error checking purchase status on checkout:', error);
+        }
+      };
+      checkPurchase();
+    }
+  }, [user, course, router]);
 
   const renderImageBackground = () => {
     return <components.Background version={1} />;

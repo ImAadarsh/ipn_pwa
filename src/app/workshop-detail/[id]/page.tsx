@@ -7,7 +7,6 @@ const BASE_URL = process.env.NEXT_PUBLIC_MAIN_URL || 'https://app.ipnacademy.in'
 
 async function getWorkshopData(id: string) {
   try {
-    console.log(`Fetching workshop data for ID: ${id} from ${URLS.MAIN_URL}/api/workshops/${id}`);
     const response = await fetch(`${URLS.MAIN_URL}/api/workshops/${id}`);
     
     if (!response.ok) {
@@ -16,7 +15,6 @@ async function getWorkshopData(id: string) {
     }
     
     const data = await response.json();
-    console.log('Workshop data fetched:', data);
     return data.workshop; // Return the nested workshop object directly
   } catch (error) {
     console.error('Error fetching workshop data:', error);
@@ -27,7 +25,7 @@ async function getWorkshopData(id: string) {
 export async function generateMetadata({params}: {params: {id: string}}): Promise<Metadata> {
   const workshop = await getWorkshopData(params.id);
   
-  console.log('Workshop object in generateMetadata:', workshop);
+  // console.log('Workshop object in generateMetadata:', workshop);
 
   // Define metadataBase here using BASE_URL
   const metadataBase = new URL(BASE_URL);
