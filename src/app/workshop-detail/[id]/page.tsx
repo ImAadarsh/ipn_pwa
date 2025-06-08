@@ -8,9 +8,7 @@ const BASE_URL = process.env.NEXT_PUBLIC_MAIN_URL || 'https://app.ipnacademy.in'
 async function getWorkshopData(id: string) {
   try {
     console.log(`Fetching workshop data for ID: ${id} from ${URLS.MAIN_URL}/api/workshops/${id}`);
-    const response = await fetch(`${URLS.MAIN_URL}/api/workshops/${id}`, {
-      next: { revalidate: 0 }
-    });
+    const response = await fetch(`${URLS.MAIN_URL}/api/workshops/${id}`);
     
     if (!response.ok) {
       console.error(`HTTP error! status: ${response.status}`);
@@ -34,40 +32,32 @@ export async function generateMetadata({params}: {params: {id: string}}): Promis
   // Define metadataBase here using BASE_URL
   const metadataBase = new URL(BASE_URL);
 
-  if (!workshop) {
-    return {
-      metadataBase,
-      title: 'IPN Academy | Workshop Details',
-      description: 'Explore professional workshops and enhance your skills with IPN Academy.',
-    };
-  }
-
   return {
     metadataBase,
-    title: `${workshop.name} | IPN Academy Workshop`,
-    description: workshop.description || `Join our ${workshop.name} workshop to enhance your professional skills. Expert-led training with practical insights.`,
-    keywords: `${workshop.name}, workshop, professional training, ${workshop.trainer_name || 'expert-led'}, IPN Academy`,
+    title: workshop ? `${workshop.name} | IPN Academy Workshop` : 'IPN Academy | Workshop Details',
+    description: workshop ? (workshop.description || `Join our ${workshop.name} workshop to enhance your professional skills. Expert-led training with practical insights.`) : 'Explore professional workshops and enhance your skills with IPN Academy.',
+    keywords: workshop ? `${workshop.name}, workshop, professional training, ${workshop.trainer_name || 'expert-led'}, IPN Academy` : '',
     openGraph: {
-      title: `${workshop.name} | IPN Academy Workshop`,
-      description: workshop.description || `Join our ${workshop.name} workshop to enhance your professional skills.`,
+      title: workshop ? `${workshop.name} | IPN Academy Workshop` : 'IPN Academy | Workshop Details',
+      description: workshop ? (workshop.description || `Join our ${workshop.name} workshop to enhance your professional skills.`) : 'Explore professional workshops and enhance your skills with IPN Academy.',
       url: `${BASE_URL}/workshop-detail/${params.id}`,
       siteName: 'IPN Academy',
-      images: [
+      images: workshop ? [
         {
           url: `${URLS.IMAGE_URL}${workshop.image.startsWith('public/') ? workshop.image : `public/img/workshop/${workshop.image}`}`,
           width: 1200,
           height: 630,
           alt: workshop.name,
         },
-      ],
+      ] : [],
       locale: 'en_US',
       type: 'website',
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${workshop.name} | IPN Academy Workshop`,
-      description: workshop.description || `Join our ${workshop.name} workshop to enhance your professional skills.`,
-      images: [`${URLS.IMAGE_URL}${workshop.image.startsWith('public/') ? workshop.image : `public/img/workshop/${workshop.image}`}`],
+      title: workshop ? `${workshop.name} | IPN Academy Workshop` : 'IPN Academy | Workshop Details',
+      description: workshop ? (workshop.description || `Join our ${workshop.name} workshop to enhance your professional skills.`) : 'Explore professional workshops and enhance your skills with IPN Academy.',
+      images: workshop ? [`${URLS.IMAGE_URL}${workshop.image.startsWith('public/') ? workshop.image : `public/img/workshop/${workshop.image}`}`] : [],
     },
     robots: {
       index: true,
@@ -82,6 +72,8 @@ export async function generateMetadata({params}: {params: {id: string}}): Promis
     },
   };
 }
+
+export const revalidate = 60; // Revalidate data every 60 seconds (adjust as needed)
 
 export const viewport: Viewport = {
   themeColor: theme.colors.white,
