@@ -35,11 +35,104 @@ const onboarding = [
 ];
 
 export const Onboarding: React.FC = () => {
+  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
+  const [isAndroid, setIsAndroid] = useState(false);
+
   useEffect(() => {
     document.body.style.backgroundColor = theme.colors.white;
+    
+    // Check if the app is already installed
+    const isInstalled = window.matchMedia('(display-mode: standalone)').matches;
+    
+    // Detect device type
+    const userAgent = window.navigator.userAgent.toLowerCase();
+    setIsIOS(/iphone|ipad|ipod/.test(userAgent));
+    setIsAndroid(/android/.test(userAgent));
+    
+    // Show install prompt if not installed
+    if (!isInstalled && (isIOS || isAndroid)) {
+      setShowInstallPrompt(true);
+    }
   }, []);
 
-  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+  const handleClosePrompt = () => {
+    setShowInstallPrompt(false);
+  };
+
+  const renderInstallPrompt = () => {
+    if (!showInstallPrompt) return null;
+
+    return (
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+      }}>
+        <div style={{
+          backgroundColor: theme.colors.white,
+          padding: '20px',
+          borderRadius: '10px',
+          maxWidth: '400px',
+          width: '90%',
+          boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
+        }}>
+          <text.H4 style={{marginBottom: '15px', color: theme.colors.mainColor, textAlign: 'center'}}>
+            Install IPN Academy
+          </text.H4>
+          
+          {isIOS ? (
+            <div style={{marginBottom: '20px'}}>
+              <text.T14 style={{color: theme.colors.secondaryTextColor, marginBottom: '10px'}}>
+                To install on iOS:
+              </text.T14>
+              <ol style={{paddingLeft: '20px', color: theme.colors.secondaryTextColor}}>
+                <li>Tap the Share button in your browser</li>
+                <li>Scroll down and tap "Add to Home Screen"</li>
+                <li>Tap "Add" to install</li>
+              </ol>
+            </div>
+          ) : isAndroid ? (
+            <div style={{marginBottom: '20px'}}>
+              <text.T14 style={{color: theme.colors.secondaryTextColor, marginBottom: '10px'}}>
+                To install on Android:
+              </text.T14>
+              <ol style={{paddingLeft: '20px', color: theme.colors.secondaryTextColor}}>
+                <li>Tap the menu button (three dots)</li>
+                <li>Select "Install app" or "Add to Home screen"</li>
+                <li>Tap "Install" to confirm</li>
+              </ol>
+            </div>
+          ) : null}
+
+          <div style={{display: 'flex', justifyContent: 'center', gap: '10px'}}>
+            <button
+              onClick={handleClosePrompt}
+              style={{
+                padding: '10px 20px',
+                backgroundColor: theme.colors.mainColor,
+                color: theme.colors.white,
+                border: 'none',
+                borderRadius: '5px',
+                cursor: 'pointer',
+                ...theme.fonts.Lato
+              }}
+            >
+              Install Later
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   const renderBackground = () => {
     return <components.Background version={2} />;
@@ -157,6 +250,7 @@ export const Onboarding: React.FC = () => {
       {renderDescription()}
       {renderDots()}
       {renderButton()}
+      {renderInstallPrompt()}
     </components.Screen>
   );
 };
