@@ -4,8 +4,8 @@ import {SignIn} from './SignIn';
 import {theme} from '../../constants';
 
 export const metadata: Metadata = {
-  title: 'Sign In',
-  description: 'Sign in screen',
+  title: 'IPN Academy | Sign In',
+  description: 'IPN Academy | Login',
 };
 
 export const viewport: Viewport = {themeColor: theme.colors.white};

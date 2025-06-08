@@ -5,7 +5,7 @@ import {SignUpAccountCreated} from './SignUpAccountCreated';
 
 export const metadata: Metadata = {
   title: 'Sign Up Account Created',
-  description: 'Sign Up Account Created screen',
+  description: 'Sign Up Account Created',
 };
 
 export const viewport: Viewport = {

@@ -39,6 +39,7 @@ export const Onboarding: React.FC = () => {
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [isAndroid, setIsAndroid] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
   useEffect(() => {
     document.body.style.backgroundColor = theme.colors.white;
@@ -48,14 +49,48 @@ export const Onboarding: React.FC = () => {
     
     // Detect device type
     const userAgent = window.navigator.userAgent.toLowerCase();
-    setIsIOS(/iphone|ipad|ipod/.test(userAgent));
-    setIsAndroid(/android/.test(userAgent));
+    const isIOSDevice = /iphone|ipad|ipod/.test(userAgent);
+    const isAndroidDevice = /android/.test(userAgent);
     
-    // Show install prompt if not installed
-    if (!isInstalled && (isIOS || isAndroid)) {
-      setShowInstallPrompt(true);
+    setIsIOS(isIOSDevice);
+    setIsAndroid(isAndroidDevice);
+
+    // Handle the beforeinstallprompt event
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      if (!isInstalled) {
+        setShowInstallPrompt(true);
+      }
+    };
+
+    // Show install prompt if not installed and on a supported device
+    if (!isInstalled && (isIOSDevice || isAndroidDevice)) {
+      if (isIOSDevice) {
+        // For iOS, we can show the prompt immediately
+        setShowInstallPrompt(true);
+      } else {
+        // For Android, we'll wait for the beforeinstallprompt event
+        window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      }
     }
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
   }, []);
+
+  const handleInstallClick = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        console.log('User accepted the install prompt');
+      }
+      setDeferredPrompt(null);
+    }
+    setShowInstallPrompt(false);
+  };
 
   const handleClosePrompt = () => {
     setShowInstallPrompt(false);
@@ -95,7 +130,7 @@ export const Onboarding: React.FC = () => {
                 To install on iOS:
               </text.T14>
               <ol style={{paddingLeft: '20px', color: theme.colors.secondaryTextColor}}>
-                <li>Tap the Share button in your browser</li>
+                <li>Tap the Share button <span style={{fontWeight: 'bold'}}>⎋</span> in your browser</li>
                 <li>Scroll down and tap "Add to Home Screen"</li>
                 <li>Tap "Add" to install</li>
               </ol>
@@ -106,7 +141,7 @@ export const Onboarding: React.FC = () => {
                 To install on Android:
               </text.T14>
               <ol style={{paddingLeft: '20px', color: theme.colors.secondaryTextColor}}>
-                <li>Tap the menu button (three dots)</li>
+                <li>Tap the menu button (three dots) in your browser</li>
                 <li>Select "Install app" or "Add to Home screen"</li>
                 <li>Tap "Install" to confirm</li>
               </ol>
@@ -114,11 +149,27 @@ export const Onboarding: React.FC = () => {
           ) : null}
 
           <div style={{display: 'flex', justifyContent: 'center', gap: '10px'}}>
+            {isAndroid && deferredPrompt && (
+              <button
+                onClick={handleInstallClick}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: theme.colors.mainColor,
+                  color: theme.colors.white,
+                  border: 'none',
+                  borderRadius: '5px',
+                  cursor: 'pointer',
+                  ...theme.fonts.Lato
+                }}
+              >
+                Install Now
+              </button>
+            )}
             <button
               onClick={handleClosePrompt}
               style={{
                 padding: '10px 20px',
-                backgroundColor: theme.colors.mainColor,
+                backgroundColor: theme.colors.secondaryTextColor,
                 color: theme.colors.white,
                 border: 'none',
                 borderRadius: '5px',
@@ -126,7 +177,7 @@ export const Onboarding: React.FC = () => {
                 ...theme.fonts.Lato
               }}
             >
-              Install Later
+              {isAndroid ? 'Install Later' : 'Got it'}
             </button>
           </div>
         </div>

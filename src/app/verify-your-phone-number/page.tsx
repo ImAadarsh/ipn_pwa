@@ -5,7 +5,7 @@ import {VerifyYourPhoneNumber} from './VerifyYourPhoneNumber';
 
 export const metadata: Metadata = {
   title: 'Verify Your Phone Number',
-  description: 'Verify Your Phone Number screen',
+  description: 'Verify Your Phone Number',
 };
 
 export const viewport: Viewport = {

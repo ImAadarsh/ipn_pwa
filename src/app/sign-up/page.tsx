@@ -5,8 +5,8 @@ import {SignUp} from './SignUp';
 import {theme} from '../../constants';
 
 export const metadata: Metadata = {
-  title: 'Sign Up',
-  description: 'Sign Up screen',
+  title: 'IPN Academy | Sign Up',
+  description: 'IPN Academy Registeration',
 };
 
 export const viewport: Viewport = {
