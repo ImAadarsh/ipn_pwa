@@ -1,6 +1,10 @@
 import React from 'react';
 
-export const CheckSvg: React.FC = () => {
+interface CheckSvgProps {
+  color?: string;
+}
+
+export const CheckSvg: React.FC<CheckSvgProps> = ({ color = '#6C6D84' }) => {
   return (
     <svg
       xmlns='http://www.w3.org/2000/svg'
@@ -10,7 +14,7 @@ export const CheckSvg: React.FC = () => {
     >
       <g>
         <path
-          stroke='#6C6D84'
+          stroke={color}
           strokeLinecap='round'
           strokeLinejoin='round'
           strokeWidth={1.5}

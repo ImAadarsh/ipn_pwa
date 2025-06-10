@@ -33,7 +33,7 @@ export async function POST(request: Request) {
 
     if (!workshop_id || !user_id) {
       return NextResponse.json(
-        {success: false, message: 'Missing required fields'},
+        {success: false, message: 'Missing required fields.'},
         {status: 400}
       );
     }

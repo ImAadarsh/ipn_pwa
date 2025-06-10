@@ -293,6 +293,11 @@ export default function CheckoutPage({params}: Props) {
       setIsProcessingPayment(true);
       setError(null);
 
+      // Check if user has required fields
+      if (!user.name || !user.email || !user.mobile) {
+        throw new Error('Please complete your profile with name, email and mobile number before proceeding with payment');
+      }
+
       const response = await fetch('/api/payments/initiate', {
         method: 'POST',
         headers: {
@@ -304,6 +309,9 @@ export default function CheckoutPage({params}: Props) {
           amount: calculateFinalPrice(),
           coupon_code: selectedCoupon?.coupon_code || null,
           cart_id: cart.id,
+          name: user.name,
+          email: user.email,
+          mobile: user.mobile,
         }),
       });
 

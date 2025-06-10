@@ -1,11 +1,9 @@
 'use client';
 
-import Link from 'next/link';
 import Image from 'next/image';
 import React, {useEffect, useState} from 'react';
 import { useRouter } from 'next/navigation';
 
-import {svg} from '../../../svg';
 import {text} from '../../../text';
 import {utils} from '../../../utils';
 import {Routes} from '../../../routes';
@@ -17,6 +15,9 @@ import type {CourseType} from '../../../types';
 
 interface User {
   id: number;
+  name: string;
+  email: string;
+  mobile: string;
 }
 
 type Props = {
@@ -28,6 +29,8 @@ export const Checkout: React.FC<Props> = ({courses, id}) => {
   const router = useRouter();
   const course = courses.find((course) => String(course.id) === id);
   const [user, setUser] = useState<User | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   if (!course) return null;
 
@@ -35,7 +38,11 @@ export const Checkout: React.FC<Props> = ({courses, id}) => {
     document.body.style.backgroundColor = theme.colors.white;
     const userData = localStorage.getItem('user');
     if (userData) {
-      setUser(JSON.parse(userData));
+      const parsedUser = JSON.parse(userData);
+      console.log('User data from localStorage:', parsedUser);
+      setUser(parsedUser);
+    } else {
+      console.log('No user data found in localStorage');
     }
   }, []);
 
@@ -57,6 +64,84 @@ export const Checkout: React.FC<Props> = ({courses, id}) => {
       checkPurchase();
     }
   }, [user, course, router]);
+
+  const handlePayment = async () => {
+    if (!user || !course) {
+      console.log('Missing user or course:', { user, course });
+      return;
+    }
+
+    try {
+      setIsProcessing(true);
+      setError(null);
+
+      console.log('Creating cart with data:', {
+        workshop_id: course.id,
+        user_id: user.id,
+      });
+
+      // Create cart first
+      const cartResponse = await fetch('/api/cart/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          workshop_id: course.id,
+          user_id: user.id,
+        }),
+      });
+
+      const cartData = await cartResponse.json();
+      console.log('Cart creation response:', cartData);
+
+      if (!cartData.success) {
+        throw new Error(cartData.message || 'Failed to create cart');
+      }
+
+      console.log('Initiating payment with data:', {
+        cart_id: cartData.cart_id,
+        workshop_id: course.id,
+        user_id: user.id,
+        amount: course.price,
+        name: user.name,
+        email: user.email,
+        mobile: user.mobile,
+      });
+
+      // Initiate payment
+      const paymentResponse = await fetch('/api/payments/initiate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          cart_id: cartData.cart_id,
+          workshop_id: course.id,
+          user_id: user.id,
+          amount: course.price,
+          name: user.name,
+          email: user.email,
+          mobile: user.mobile,
+        }),
+      });
+
+      const paymentData = await paymentResponse.json();
+      console.log('Payment initiation response:', paymentData);
+
+      if (!paymentData.success) {
+        throw new Error(paymentData.message || 'Failed to initiate payment');
+      }
+
+      // Redirect to payment URL
+      window.location.href = paymentData.url;
+    } catch (error) {
+      console.error('Payment error:', error);
+      setError(error instanceof Error ? error.message : 'Failed to process payment');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   const renderImageBackground = () => {
     return <components.Background version={1} />;
@@ -91,30 +176,21 @@ export const Checkout: React.FC<Props> = ({courses, id}) => {
               <elements.CoursePrice course={course} />
             </div>
           </div>
-          {/* Payment method */}
-          <Link
-            href={Routes.CHOOSE_PAYMENT_METHOD}
-            className='custom-block'
-            style={{
-              padding: '19px 20px',
-              ...utils.rowCenter(),
+
+          {/* Error Message */}
+          {error && (
+            <div style={{
+              padding: '12px 16px',
+              backgroundColor: '#ffebee',
+              color: '#c62828',
+              borderRadius: 8,
               marginBottom: 20,
-            }}
-          >
-            <text.T16 style={{marginRight: 'auto'}}>Payment method</text.T16>
-            <text.T16 style={{marginRight: 6}}>**** 6644</text.T16>
-            <svg.RightArrowSvg />
-          </Link>
-          {/* Apply a coupon */}
-          <div
-            style={{...utils.rowCenter(), marginBottom: 30}}
-            className='clickable'
-          >
-            <text.T14 style={{marginRight: 8, color: theme.colors.mainColor}}>
-              Apply a coupon
-            </text.T14>
-            <svg.RightArrowSvg />
-          </div>
+              fontSize: 14,
+            }}>
+              {error}
+            </div>
+          )}
+
           {/* Total */}
           <div>
             <div style={{...utils.rowCenterSpcBtw(), marginBottom: 7}}>
@@ -122,7 +198,7 @@ export const Checkout: React.FC<Props> = ({courses, id}) => {
                 Subtotal
               </text.T14>
               <text.H6 style={{color: theme.colors.secondaryTextColor}}>
-                ${course.price}
+                ₹{course.price}
               </text.H6>
             </div>
             <div style={{...utils.rowCenterSpcBtw(), marginBottom: 17}}>
@@ -130,7 +206,7 @@ export const Checkout: React.FC<Props> = ({courses, id}) => {
                 Discount
               </text.T14>
               <text.H6 style={{color: theme.colors.secondaryTextColor}}>
-                -$0
+                -₹0
               </text.H6>
             </div>
             <div
@@ -143,14 +219,16 @@ export const Checkout: React.FC<Props> = ({courses, id}) => {
             />
             <div style={{...utils.rowCenterSpcBtw(), marginBottom: 17}}>
               <text.H4>Total</text.H4>
-              <text.H4>${course.price}</text.H4>
+              <text.H4>₹{course.price}</text.H4>
             </div>
           </div>
+
           {/* Button */}
           <components.Button
-            label='Pay Now'
+            label={isProcessing ? 'Processing...' : 'Pay Now'}
+            onClick={handlePayment}
             style={{marginBottom: 20}}
-            href={Routes.CHOOSE_PAYMENT_METHOD}
+            disabled={isProcessing || !user}
           />
         </div>
       </main>

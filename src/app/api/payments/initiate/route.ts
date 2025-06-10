@@ -1,6 +1,5 @@
 import {NextResponse} from 'next/server';
 import mysql, {ResultSetHeader, RowDataPacket} from 'mysql2/promise';
-import crypto from 'crypto';
 
 const dbConfig = {
   host: process.env.DB_HOST,
@@ -9,20 +8,13 @@ const dbConfig = {
   database: process.env.DB_NAME,
 };
 
-// PhonePe Demo Credentials
-const PHONEPE_MERCHANT_ID = 'IPNACADEMYONLINE';
-const PHONEPE_SALT_KEY = '6afd41a3-e15c-4241-907e-0fcd4f97a03f';
-const PHONEPE_SALT_INDEX = 1;
-const PHONEPE_BASE_URL = 'https://api.phonepe.com/apis/hermes/pg/v1';
+// Instamojo Credentials
+const INSTAMOJO_API_KEY = process.env.INSTAMOJO_API_KEY;
+const INSTAMOJO_AUTH_TOKEN = process.env.INSTAMOJO_AUTH_TOKEN;
+const INSTAMOJO_BASE_URL = 'https://www.instamojo.com/api/1.1';
 
 function generateVerifyToken() {
   return Math.floor(Math.random() * (9999999999999999 - 9000000000009 + 1)) + 9000000000009;
-}
-
-function generateXVerifyHeader(payload: string) {
-  const data = payload + '/pg/v1/pay' + PHONEPE_SALT_KEY;
-  const sha256 = crypto.createHash('sha256').update(data).digest('hex');
-  return sha256 + '###' + PHONEPE_SALT_INDEX;
 }
 
 export async function POST(request: Request) {
@@ -33,7 +25,7 @@ export async function POST(request: Request) {
 
     if (!cart_id || !workshop_id || !user_id || !amount || !name || !email || !mobile) {
       return NextResponse.json(
-        {success: false, message: 'Missing required fields'},
+        {success: false, message: 'Missing required fields.'},
         {status: 400}
       );
     }
@@ -55,7 +47,6 @@ export async function POST(request: Request) {
 
     const workshop = workshopRows[0];
     const verify_token = generateVerifyToken();
-    const transaction_id = Math.floor(Math.random() * (9999999999999999 - 9000000000009 + 1)) + 9000000000009;
 
     // Create payment record
     const [paymentResult] = await connection.execute<ResultSetHeader>(
@@ -94,81 +85,78 @@ export async function POST(request: Request) {
       [paymentResult.insertId, verify_token, cart_id]
     );
 
-    // Prepare PhonePe payload
+    // Prepare Instamojo payload
     const payload = {
-      merchantId: PHONEPE_MERCHANT_ID,
-      merchantTransactionId: `IPN_${transaction_id}`,
-      merchantUserId: user_id,
-      amount: amount * 100, // Convert to paise
-      redirectUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/payment/verify?token=${verify_token}`,
-      redirectMode: 'POST',
-      callbackUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/api/payments/webhook`,
-      mobileNumber: mobile,
-      paymentInstrument: {
-        type: 'PAY_PAGE',
-      },
+      purpose: `Workshop Payment - ${workshop_id}`,
+      amount: amount,
+      buyer_name: name,
+      email: email,
+      phone: mobile,
+      redirect_url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment/verify?token=${verify_token}`,
+      webhook: `${process.env.NEXT_PUBLIC_BASE_URL}/api/payments/webhook`,
+      allow_repeated_payments: false,
+      send_email: true,
+      send_sms: true,
     };
 
-    const payloadString = JSON.stringify(payload);
-    const base64Payload = Buffer.from(payloadString).toString('base64');
-    const xVerifyHeader = generateXVerifyHeader(base64Payload);
+    // Make request to Instamojo
+    if (!INSTAMOJO_API_KEY || !INSTAMOJO_AUTH_TOKEN) {
+      console.error('Missing Instamojo credentials:', {
+        hasApiKey: !!INSTAMOJO_API_KEY,
+        hasAuthToken: !!INSTAMOJO_AUTH_TOKEN
+      });
+      throw new Error('Instamojo API credentials are not configured');
+    }
 
-    // Make request to PhonePe
-    const response = await fetch(`${PHONEPE_BASE_URL}/pay`, {
+    const response = await fetch(`${INSTAMOJO_BASE_URL}/payment-requests/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-VERIFY': xVerifyHeader,
-        'Accept': 'application/json',
+        'X-Api-Key': INSTAMOJO_API_KEY,
+        'X-Auth-Token': INSTAMOJO_AUTH_TOKEN,
       },
-      body: JSON.stringify({
-        request: base64Payload,
-      }),
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('PhonePe API Error:', {
+      console.error('Instamojo API Error:', {
         status: response.status,
         statusText: response.statusText,
         error: errorText,
-        url: `${PHONEPE_BASE_URL}/pay`,
-        headers: {
-          'X-VERIFY': xVerifyHeader,
-        },
       });
-      throw new Error(`PhonePe API error: ${response.status} ${response.statusText}`);
+      throw new Error(`Instamojo API error: ${response.status} ${response.statusText}`);
     }
 
-    const phonepeResponse = await response.json();
-    console.log('PhonePe Response:', phonepeResponse);
+    const instamojoResponse = await response.json();
+    console.log('Instamojo Response:', instamojoResponse);
 
-    if (!phonepeResponse.success || !phonepeResponse.data?.instrumentResponse?.redirectInfo?.url) {
-      console.error('PhonePe Error:', phonepeResponse);
-      throw new Error(phonepeResponse.message || 'Failed to initiate payment with PhonePe');
+    if (!instamojoResponse.success || !instamojoResponse.payment_request?.longurl) {
+      console.error('Instamojo Error:', instamojoResponse);
+      throw new Error(instamojoResponse.message || 'Failed to initiate payment with Instamojo');
     }
 
-    // Update payment with PhonePe URL
+    // Update payment with Instamojo URL
     await connection.execute<ResultSetHeader>(
       `UPDATE payments 
        SET url = ?,
            updated_at = NOW()
        WHERE id = ?`,
-      [phonepeResponse.data.instrumentResponse.redirectInfo.url, paymentResult.insertId]
+      [instamojoResponse.payment_request.longurl, paymentResult.insertId]
     );
 
-    // Update cart with PhonePe URL
+    // Update cart with Instamojo URL
     await connection.execute<ResultSetHeader>(
       `UPDATE carts 
        SET url = ?,
            updated_at = NOW()
        WHERE id = ?`,
-      [phonepeResponse.data.instrumentResponse.redirectInfo.url, cart_id]
+      [instamojoResponse.payment_request.longurl, cart_id]
     );
 
     return NextResponse.json({
       success: true,
-      url: phonepeResponse.data.instrumentResponse.redirectInfo.url,
+      url: instamojoResponse.payment_request.longurl,
     });
   } catch (error) {
     console.error('Error initiating payment:', error);

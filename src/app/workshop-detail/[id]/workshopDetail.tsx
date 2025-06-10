@@ -4,6 +4,7 @@ import React, {useEffect, useState} from 'react';
 import Image from 'next/image';
 import {useRouter} from 'next/navigation';
 import { FaRegClock, FaRegCalendarAlt, FaUsers, FaRegStar, FaCentos, FaTrophy } from 'react-icons/fa';
+import { MdOutlineDateRange, MdLocationPin } from "react-icons/md";
 
 import {text} from '../../../text';
 import {Routes} from '../../../routes';
@@ -66,6 +67,40 @@ interface User {
   sessionToken: string;
 }
 
+interface Stats {
+  total_users_count: number;
+  workshops_count: number;
+  countries_count: number;
+  educators_count: number;
+  cities_count: number;
+  certifications_count: number;
+  learning_hours_count: number;
+}
+
+interface Review {
+  id: number;
+  rating: number;
+  comment: string;
+  user_name: string;
+  user_profile: string;
+  trainer_name: string;
+  created_at: string;
+}
+
+interface FAQ {
+  id: number;
+  name: string; // This will be the question
+  description: string; // This will be the answer
+}
+
+interface RecentPurchase {
+  user_name: string;
+  workshop_name: string;
+  purchase_date: string;
+  user_profile: string;
+  user_city: string;
+}
+
 interface Props {
   id: string;
 }
@@ -74,6 +109,10 @@ export const CourseDetails: React.FC<Props> = ({id}) => {
   const router = useRouter();
   const [workshop, setWorkshop] = useState<Workshop | null>(null);
   const [feedback, setFeedback] = useState<Feedback[]>([]);
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [faqs, setFaqs] = useState<FAQ[]>([]);
+  const [recentPurchases, setRecentPurchases] = useState<RecentPurchase[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'description' | 'trainer' | 'reviews'>('description');
@@ -88,6 +127,52 @@ export const CourseDetails: React.FC<Props> = ({id}) => {
   const [multipleAccounts, setMultipleAccounts] = useState<User[]>([]);
   const [showMultipleAccounts, setShowMultipleAccounts] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+
+  const getTimeAgo = (dateString: string): string => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+    let interval = seconds / 31536000;
+    if (interval > 1) {
+      return Math.floor(interval) + " years ago";
+    }
+    interval = seconds / 2592000;
+    if (interval > 1) {
+      return Math.floor(interval) + " months ago";
+    }
+    interval = seconds / 86400;
+    if (interval > 1) {
+      return Math.floor(interval) + " days ago";
+    }
+    interval = seconds / 3600;
+    if (interval > 1) {
+      return Math.floor(interval) + " hours ago";
+    }
+    interval = seconds / 60;
+    if (interval > 1) {
+      return Math.floor(interval) + " minutes ago";
+    }
+    return Math.floor(seconds) + " seconds ago";
+  };
+
+  const calculateTimeLeft = () => {
+    if (!workshop?.start_date) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+    
+    const difference = new Date(workshop.start_date).getTime() - new Date().getTime();
+    let timeLeft = { days: 0, hours: 0, minutes: 0, seconds: 0 };
+
+    if (difference > 0) {
+      timeLeft = {
+        days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+        minutes: Math.floor((difference / 1000 / 60) % 60),
+        seconds: Math.floor((difference / 1000) % 60),
+      };
+    }
+    return timeLeft;
+  };
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -95,6 +180,10 @@ export const CourseDetails: React.FC<Props> = ({id}) => {
       setUser(JSON.parse(userData));
     }
     fetchWorkshopDetails();
+    fetchStats();
+    fetchReviews();
+    fetchFaqs();
+    fetchRecentPurchases();
   }, [id]);
 
   useEffect(() => {
@@ -102,6 +191,15 @@ export const CourseDetails: React.FC<Props> = ({id}) => {
       checkPurchaseStatus();
     }
   }, [user?.id, workshop?.id]);
+
+  useEffect(() => {
+    if (workshop?.start_date) {
+      const timer = setInterval(() => {
+        setTimeLeft(calculateTimeLeft());
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [workshop?.start_date]);
 
   const checkPurchaseStatus = async () => {
     if (!user || !workshop) return;
@@ -143,6 +241,56 @@ export const CourseDetails: React.FC<Props> = ({id}) => {
       setFeedback([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchStats = async () => {
+    try {
+      const response = await fetch('/api/stats');
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        setStats(data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    }
+  };
+
+  const fetchReviews = async () => {
+    try {
+      const response = await fetch('/api/reviews?limit=10');
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        setReviews(data.data.reviews);
+      }
+    } catch (error) {
+      console.error('Error fetching reviews:', error);
+    }
+  };
+
+  const fetchFaqs = async () => {
+    try {
+      const response = await fetch('/api/faqs');
+      const data = await response.json();
+      if (response.ok && data.success) {
+        setFaqs(data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching FAQs:', error);
+    }
+  };
+
+  const fetchRecentPurchases = async () => {
+    try {
+      const response = await fetch('/api/recent-purchases');
+      const data = await response.json();
+      if (response.ok && data.success) {
+        setRecentPurchases(data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching recent purchases:', error);
     }
   };
 
@@ -579,7 +727,7 @@ export const CourseDetails: React.FC<Props> = ({id}) => {
                         backgroundColor: `${theme.colors.mainColor}10`,
                         ...utils.rowCenter(),
                       }}>
-                        <svg.CheckSvg />
+                        <svg.CheckSvg color={theme.colors.mainColor} />
                         <text.T14 style={{
                           marginLeft: 12,
                           color: theme.colors.secondaryTextColor,
@@ -625,6 +773,910 @@ export const CourseDetails: React.FC<Props> = ({id}) => {
                 </div>
               </div>
             )}
+
+                        {/* Countdown Timer Section */}
+            {workshop?.start_date && new Date(workshop.start_date).getTime() > Date.now() && (
+              <div style={{
+                marginTop: 60,
+                padding: '40px',
+                borderRadius: 20,
+                background: `linear-gradient(45deg, ${theme.colors.mainOrange}, ${theme.colors.mainColor})`,
+                color: theme.colors.white,
+                textAlign: 'center',
+                position: 'relative',
+                overflow: 'hidden',
+                boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
+                animation: 'pulse-gradient 2s infinite alternate',
+                border: '2px solid rgba(255, 255, 255, 0.5)',
+                backgroundSize: '200% 200%',
+                backgroundPosition: '0% 50%',
+                filter: 'drop-shadow(0 0 15px rgba(255, 255, 255, 0.5))',
+              }}>
+                <style jsx>{`
+                  @keyframes pulse-gradient {
+                    0% { background-position: 0% 50%; }
+                    100% { background-position: 100% 50%; }
+                  }
+                  .timer-unit {
+                    display: inline-block;
+                    margin: 0 15px;
+                    padding: 15px 20px;
+                    background: rgba(255, 255, 255, 0.15);
+                    border-radius: 15px;
+                    backdrop-filter: blur(10px);
+                    border: 1px solid rgba(255, 255, 255, 0.3);
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+                    min-width: 100px;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    position: relative;
+                    overflow: hidden;
+                    transition: all 0.3s ease;
+                    transform: scale(1); /* Added initial transform */
+                  }
+                  .timer-unit:hover {
+                    transform: scale(1.05) rotate(1deg);
+                    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+                  }
+                  .timer-number {
+                    font-size: 3.5rem;
+                    font-weight: 800;
+                    line-height: 1;
+                    color: #FFF;
+                    text-shadow: 0 2px 5px rgba(0,0,0,0.3);
+                    position: relative;
+                    z-index: 1;
+                    transition: all 0.3s ease;
+                  }
+                  .timer-label {
+                    font-size: 1rem;
+                    font-weight: 600;
+                    margin-top: 10px;
+                    opacity: 0.8;
+                    color: white;
+                    position: relative;
+                    z-index: 1;
+                  }
+                  .sparkle {
+                    position: absolute;
+                    width: 10px;
+                    height: 10px;
+                    background: #FFF;
+                    border-radius: 50%;
+                    opacity: 0;
+                    animation: sparkle 1s forwards;
+                  }
+                  @keyframes sparkle {
+                    0% { transform: scale(0) translateY(0); opacity: 1; }
+                    100% { transform: scale(1) translateY(-20px); opacity: 0; }
+                  }
+                  .hover-scale:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 12px 25px rgba(0,0,0,0.4);
+                  }
+                  .active-scale:active {
+                    transform: translateY(2px);
+                  }
+                `}</style>
+                <text.H2 style={{
+                  ...theme.fonts.Lato_700Bold,
+                  fontSize: 32,
+                  marginBottom: 20,
+                  textShadow: '0 2px 5px rgba(0,0,0,0.3)',
+                  letterSpacing: 2,
+                  color: 'rgba(255, 255, 255, 0.9)',
+                }}>
+                  Limited Time Offer !!
+                </text.H2>
+                <text.T16 style={{
+                  color: 'rgba(255, 255, 255, 0.9)',
+                  marginBottom: 30,
+                  fontWeight: 600,
+                }}>
+                  Workshop starts in:
+                </text.T16>
+                <div id="countdown-timer" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                  <div className="timer-unit">
+                    <div className="timer-number">{timeLeft.days}</div>
+                    <div className="timer-label">Days</div>
+                  </div>
+                  <div className="timer-unit">
+                    <div className="timer-number">{timeLeft.hours}</div>
+                    <div className="timer-label">Hours</div>
+                  </div>
+                  <div className="timer-unit">
+                    <div className="timer-number">{timeLeft.minutes}</div>
+                    <div className="timer-label">Minutes</div>
+                  </div>
+                  <div className="timer-unit">
+                    <div className="timer-number">{timeLeft.seconds}</div>
+                    <div className="timer-label">Seconds</div>
+                  </div>
+                </div>
+                <button
+                  onClick={handleEnrollClick}
+                  disabled={isPurchased}
+                  style={{
+                    marginTop: 40,
+                    padding: '16px 32px',
+                    borderRadius: 12,
+                    background: isPurchased ? 'rgba(255, 255, 255, 0.3)' : theme.colors.white,
+                    color: isPurchased ? 'rgba(255, 255, 255, 0.7)' : theme.colors.mainColor,
+                    ...theme.fonts.Lato_700Bold,
+                    fontSize: 18,
+                    boxShadow: '0 8px 20px rgba(0,0,0,0.3)',
+                    cursor: isPurchased ? 'not-allowed' : 'pointer',
+                    border: 'none',
+                    opacity: isPurchased ? 0.7 : 1,
+                    transition: 'all 0.3s ease',
+                    textTransform: 'uppercase',
+                    letterSpacing: 1,
+                  }}
+                  className="hover-scale active-scale"
+                >
+                  {isPurchased ? 'Purchased' : (user ? 'Enroll Now' : 'Register & Enroll')}
+                </button>
+              </div>
+            )}
+
+            {/* Impact Section */}
+            <div style={{marginTop: 60}}>
+              <style jsx>{`
+                @keyframes gradientMove {
+                  0% { background-position: 0% 50%; }
+                  50% { background-position: 100% 50%; }
+                  100% { background-position: 0% 50%; }
+                }
+                @keyframes float {
+                  0%, 100% { transform: translateY(0); }
+                  50% { transform: translateY(-20px); }
+                }
+                @keyframes pulse {
+                  0%, 100% { transform: scale(1); }
+                  50% { transform: scale(1.05); }
+                }
+                @keyframes shine {
+                  0% { background-position: -200% center; }
+                  100% { background-position: 200% center; }
+                }
+                .hover-lift {
+                  transition: transform 0.3s ease;
+                }
+                .hover-lift:hover {
+                  transform: translateY(-5px);
+                }
+                .hover-scale {
+                  transition: transform 0.3s ease;
+                }
+                .hover-scale:hover {
+                  transform: translateY(-2px);
+                }
+              `}</style>
+
+              <div style={{
+                position: 'relative',
+                padding: '60px 40px',
+                borderRadius: 30,
+                background: `linear-gradient(135deg, ${theme.colors.mainColor} 0%, ${theme.colors.mainColor}dd 100%)`,
+                overflow: 'hidden',
+                color: theme.colors.white,
+              }}>
+                {/* Animated Background */}
+                <div style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  background: `
+                    radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.05) 0%, transparent 50%)
+                  `,
+                  animation: 'gradientMove 15s ease infinite alternate',
+                }} />
+
+                {/* Content */}
+                <div style={{position: 'relative', zIndex: 1}}>
+                  {/* Header */}
+                  <div style={{
+                    textAlign: 'center',
+                    marginBottom: 40,
+                  }}>
+                    <div style={{
+                      display: 'inline-block',
+                      padding: '8px 24px',
+                      borderRadius: 30,
+                      background: 'rgba(255, 255, 255, 0.2)',
+                      backdropFilter: 'blur(10px)',
+                      marginBottom: 20,
+                      animation: 'pulse 2s infinite',
+                    }}>
+                      <text.T14 style={{
+                        color: theme.colors.white,
+                        ...theme.fonts.Lato_700Bold,
+                      }}>
+                        South Asia's #1 Teacher Training Platform
+                      </text.T14>
+                    </div>
+                    <text.H2 style={{
+                      ...theme.fonts.Lato_700Bold,
+                      fontSize: 36,
+                      color: theme.colors.white,
+                      marginBottom: 16,
+                      background: 'linear-gradient(90deg, #fff, #f0f0f0, #fff)',
+                      backgroundSize: '200% auto',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      animation: 'shine 3s linear infinite',
+                    }}>
+                      Join {stats?.total_users_count || 0}+ Users
+                    </text.H2>
+                    <text.T16 style={{
+                      color: 'rgba(255, 255, 255, 0.9)',
+                      maxWidth: 600,
+                      margin: '0 auto',
+                    }}>
+                      Be part of a global movement that's revolutionizing teaching methods and empowering educators across {stats?.countries_count || 0} countries.
+                    </text.T16>
+                  </div>
+
+                  {/* Stats Grid */}
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                    gap: 24,
+                    marginBottom: 40,
+                  }}>
+                    {stats && [
+                      {
+                        icon: <FaUsers size={24} />,
+                        value: `${stats.educators_count}+`,
+                        label: 'Educators Trained',
+                        gradient: 'linear-gradient(45deg, #f59e0b, #fcd34d)',
+                      },
+                      {
+                        icon: <FaRegCalendarAlt size={24} />,
+                        value: `${stats.workshops_count}+`,
+                        label: 'Workshops',
+                        gradient: 'linear-gradient(45deg, #3b82f6, #60a5fa)',
+                      },
+                      {
+                        icon: <FaCentos size={24} />,
+                        value: `${stats.countries_count}`,
+                        label: 'Countries',
+                        gradient: 'linear-gradient(45deg, #10b981, #34d399)',
+                      },
+                      {
+                        icon: <FaRegStar size={24} />,
+                        value: `4.7/5`,
+                        label: 'Rating',
+                        gradient: 'linear-gradient(45deg, #8b5cf6, #c4b5fd)',
+                      },
+                    ].map((stat, index) => (
+                      <div key={index} style={{
+                        padding: '24px',
+                        borderRadius: 20,
+                        background: 'rgba(255, 255, 255, 0.1)',
+                        backdropFilter: 'blur(10px)',
+                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                        transition: 'transform 0.3s ease',
+                        cursor: 'pointer',
+                      }} className="hover-lift">
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 16,
+                          marginBottom: 16,
+                        }}>
+                          <div style={{
+                            width: 48,
+                            height: 48,
+                            borderRadius: 24,
+                            background: stat.gradient,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}>
+                            {stat.icon}
+                          </div>
+                          <div>
+                            <text.H3 style={{
+                              ...theme.fonts.Lato_700Bold,
+                              fontSize: 28,
+                              color: theme.colors.white,
+                              marginBottom: 4,
+                            }}>
+                              {stat.value}
+                            </text.H3>
+                            <text.T14 style={{
+                              color: 'rgba(255, 255, 255, 0.8)',
+                            }}>
+                              {stat.label}
+                            </text.T14>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Testimonials */}
+                  <div style={{
+                    padding: '32px',
+                    borderRadius: 20,
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    marginBottom: 40,
+                  }}>
+                    <text.H3 style={{
+                      ...theme.fonts.Lato_700Bold,
+                      fontSize: 24,
+                      color: theme.colors.white,
+                      marginBottom: 24,
+                      textAlign: 'center',
+                    }}>
+                      What Our Educators Say
+                    </text.H3>
+                    {reviews.length > 0 ? (
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+                        gap: 24,
+                      }}>
+                        {reviews.map((review, index) => (
+                          <div key={index} style={{
+                            padding: '24px',
+                            borderRadius: 16,
+                            background: 'rgba(255, 255, 255, 0.1)',
+                            border: '1px solid rgba(255, 255, 255, 0.2)',
+                          }}>
+                            <div style={{
+                              display: 'flex',
+                              gap: 8,
+                              marginBottom: 16,
+                            }}>
+                              {[...Array(review.rating)].map((_, i) => (
+                                <svg.StarSvg key={i} color={theme.colors.white} />
+                              ))}
+                            </div>
+                            <text.T16 style={{
+                              color: 'rgba(255, 255, 255, 0.9)',
+                              fontStyle: 'italic',
+                              marginBottom: 20,
+                              lineHeight: 1.6,
+                            }}>
+                              "{review.comment}"
+                            </text.T16>
+                            <div style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 12,
+                            }}>
+                              <div style={{
+                                width: 48,
+                                height: 48,
+                                borderRadius: 24,
+                                background: 'rgba(255, 255, 255, 0.2)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                overflow: 'hidden',
+                              }}>
+                                {review.user_profile ? (
+                                  <Image
+                                    src={`${URLS.IMAGE_URL}${review.user_profile}`}
+                                    alt={review.user_name}
+                                    width={48}
+                                    height={48}
+                                    style={{
+                                      width: '100%',
+                                      height: '100%',
+                                      objectFit: 'cover',
+                                    }}
+                                  />
+                                ) : (
+                                  <text.T16 style={{
+                                    color: theme.colors.white,
+                                    ...theme.fonts.Lato_700Bold,
+                                  }}>
+                                    {review.user_name[0]}
+                                  </text.T16>
+                                )}
+                              </div>
+                              <div>
+                                <text.T14 style={{
+                                  ...theme.fonts.Lato_700Bold,
+                                  color: theme.colors.white,
+                                }}>
+                                  {review.user_name}
+                                </text.T14>
+                                <text.T12 style={{
+                                  color: 'rgba(255, 255, 255, 0.8)',
+                                }}>
+                                  {review.trainer_name} • {new Date(review.created_at).toLocaleDateString()}
+                                </text.T12>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div style={{
+                        textAlign: 'center',
+                        padding: '40px 20px',
+                        background: 'rgba(255, 255, 255, 0.1)',
+                        borderRadius: 16,
+                      }}>
+                        <text.T16 style={{
+                          color: 'rgba(255, 255, 255, 0.9)',
+                        }}>
+                          Be the first to share your experience!
+                        </text.T16>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* CTA Section */}
+                  <div style={{
+                    textAlign: 'center',
+                  }}>
+                    <button
+                      onClick={handleEnrollClick}
+                      disabled={isPurchased}
+                      style={{
+                        padding: '16px 32px',
+                        borderRadius: 12,
+                        background: isPurchased ? 'rgba(255, 255, 255, 0.3)' : theme.colors.white,
+                        color: isPurchased ? 'rgba(255, 255, 255, 0.7)' : theme.colors.mainColor,
+                        ...theme.fonts.Lato_700Bold,
+                        fontSize: 16,
+                        boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)',
+                        cursor: isPurchased ? 'not-allowed' : 'pointer',
+                        border: 'none',
+                        opacity: isPurchased ? 0.7 : 1,
+                        transition: 'transform 0.3s ease',
+                      }} className="hover-scale"
+                    >
+                      {isPurchased ? 'You Already Purchased It' : (user ? 'Enroll Now' : 'Register & Enroll')}
+                    </button>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 8,
+                      marginTop: 16,
+                    }}>
+                      <svg.ClockSvg color={theme.colors.white} />
+                      <text.T14 style={{
+                        color: 'rgba(255, 255, 255, 0.9)',
+                      }}>
+                        Limited seats available. Secure your spot today!
+                      </text.T14>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Recent Purchases Section */}
+            {recentPurchases.length > 0 && (
+              <div style={{marginTop: 60}}>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: 30,
+                }}>
+                  <div>
+                    <text.H3 style={{
+                      ...theme.fonts.Lato_700Bold,
+                      fontSize: 24,
+                      color: theme.colors.mainColor,
+                      marginBottom: 8,
+                    }}>
+                      Recent Workshops Bought
+                    </text.H3>
+                    <text.T14 style={{
+                      color: theme.colors.secondaryTextColor,
+                    }}>
+                      See what others are learning
+                    </text.T14>
+                  </div>
+                  <div style={{
+                    display: 'flex',
+                    gap: 12,
+                  }}>
+                    <button
+                      onClick={() => {
+                        const container = document.getElementById('recent-purchases-slider');
+                        if (container) {
+                          container.scrollLeft -= 400;
+                        }
+                      }}
+                      style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: 20,
+                        background: theme.colors.white,
+                        border: `1px solid ${theme.colors.mainColor}20`,
+                        color: theme.colors.mainColor,
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: 20,
+                      }}
+                      className="hover-scale"
+                    >
+                      ←
+                    </button>
+                    <button
+                      onClick={() => {
+                        const container = document.getElementById('recent-purchases-slider');
+                        if (container) {
+                          container.scrollLeft += 400;
+                        }
+                      }}
+                      style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: 20,
+                        background: theme.colors.white,
+                        border: `1px solid ${theme.colors.mainColor}20`,
+                        color: theme.colors.mainColor,
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: 20,
+                      }}
+                      className="hover-scale"
+                    >
+                      →
+                    </button>
+                  </div>
+                </div>
+                <div
+                  id="recent-purchases-slider"
+                  style={{
+                    display: 'flex',
+                    gap: 24,
+                    overflowX: 'auto',
+                    scrollBehavior: 'smooth',
+                    padding: '10px 0',
+                    scrollbarWidth: 'none',
+                    msOverflowStyle: 'none',
+                    position: 'relative',
+                  }}
+                >
+                  <style jsx>{`
+                    #recent-purchases-slider::-webkit-scrollbar {
+                      display: none;
+                    }
+                    @keyframes slideIn {
+                      from { transform: translateX(20px); opacity: 0; }
+                      to { transform: translateX(0); opacity: 1; }
+                    }
+                    .purchase-card {
+                      animation: slideIn 0.5s ease forwards;
+                      min-width: 320px;
+                      flex: 0 0 auto;
+                      height: 280px;
+                      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                      position: relative;
+                      backdrop-filter: blur(10px);
+                      background: rgba(255, 255, 255, 0.9);
+                      border: 1px solid rgba(255, 255, 255, 0.2);
+                    }
+                    .purchase-card::before {
+                      content: '';
+                      position: absolute;
+                      inset: 0;
+                      border-radius: 20px;
+                      padding: 2px;
+                      background: linear-gradient(135deg, ${theme.colors.mainColor}40, ${theme.colors.mainColor}10);
+                      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+                      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+                      -webkit-mask-composite: xor;
+                      mask-composite: exclude;
+                      pointer-events: none;
+                    }
+                    .purchase-card:hover {
+                      transform: translateY(-8px) scale(1.02);
+                      box-shadow: 
+                        0 20px 40px rgba(37, 73, 150, 0.15),
+                        0 0 20px rgba(37, 73, 150, 0.1);
+                    }
+                    .purchase-card:hover::after {
+                      content: '';
+                      position: absolute;
+                      inset: 0;
+                      border-radius: 20px;
+                      padding: 2px;
+                      background: linear-gradient(135deg, ${theme.colors.mainColor}, ${theme.colors.mainColor}80);
+                      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+                      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+                      -webkit-mask-composite: xor;
+                      mask-composite: exclude;
+                      opacity: 0;
+                      animation: borderGlow 2s infinite;
+                    }
+                    @keyframes borderGlow {
+                      0% { opacity: 0; }
+                      50% { opacity: 1; }
+                      100% { opacity: 0; }
+                    }
+                    @keyframes float {
+                      0% { transform: translateY(0px); }
+                      50% { transform: translateY(-5px); }
+                      100% { transform: translateY(0px); }
+                    }
+                    .user-avatar {
+                      animation: float 3s ease-in-out infinite;
+                    }
+                    @keyframes autoScroll {
+                      0% { transform: translateX(0); }
+                      100% { transform: translateX(-50%); }
+                    }
+                    .auto-scroll {
+                      animation: autoScroll 30s linear infinite;
+                    }
+                    .auto-scroll:hover {
+                      animation-play-state: paused;
+                    }
+                  `}</style>
+                  <div style={{
+                    display: 'flex',
+                    gap: 24,
+                    animation: 'autoScroll 30s linear infinite',
+                  }} className="auto-scroll">
+                    {[...recentPurchases, ...recentPurchases, ...recentPurchases].map((purchase, index) => (
+                      <div
+                        key={index}
+                        className="purchase-card"
+                        style={{
+                          padding: '24px',
+                          borderRadius: 20,
+                          background: 'linear-gradient(135deg, #ffffff, #f8f9ff)',
+                          boxShadow: '0 10px 30px rgba(37, 73, 150, 0.08)',
+                          border: '1px solid rgba(37, 73, 150, 0.1)',
+                          transition: 'all 0.3s ease',
+                          animationDelay: `${index * 0.1}s`,
+                          position: 'relative',
+                          overflow: 'hidden',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'space-between',
+                        }}
+                      >
+                        {/* Decorative Elements */}
+                        <div style={{
+                          position: 'absolute',
+                          top: 0,
+                          right: 0,
+                          width: 100,
+                          height: 100,
+                          background: `linear-gradient(135deg, ${theme.colors.mainColor}10, transparent)`,
+                          borderRadius: '0 0 0 100%',
+                        }} />
+                        <div style={{
+                          position: 'absolute',
+                          bottom: 0,
+                          left: 0,
+                          width: 80,
+                          height: 80,
+                          background: `linear-gradient(135deg, transparent, ${theme.colors.mainColor}05)`,
+                          borderRadius: '0 100% 0 0',
+                        }} />
+
+                        <div style={{
+                          position: 'relative',
+                          zIndex: 1,
+                          flex: 1,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7))',
+                          borderRadius: 16,
+                          padding: '16px',
+                        }}>
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 16,
+                            marginBottom: 20,
+                          }}>
+                            <div className="user-avatar" style={{
+                              width: 60,
+                              height: 60,
+                              borderRadius: 30,
+                              background: `linear-gradient(135deg, ${theme.colors.mainColor}, ${theme.colors.mainColor}80)`,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              overflow: 'hidden',
+                              flexShrink: 0,
+                              border: '2px solid rgba(255, 255, 255, 0.7)',
+                              boxShadow: '0 4px 15px rgba(37, 73, 150, 0.2)',
+                            }}>
+                              {purchase.user_profile && purchase.user_profile !== 'public/img/workshop/oqDdQPGw3UZnIlmNZojNfTvHHVA9KHjO1OqDHJE6.png' ? (
+                                <Image
+                                  src={`${URLS.IMAGE_URL}${purchase.user_profile}`}
+                                  alt={purchase.user_name}
+                                  width={60}
+                                  height={60}
+                                  style={{ objectFit: 'cover' }}
+                                />
+                              ) : (
+                                <text.T16 style={{ color: theme.colors.white, ...theme.fonts.Lato_700Bold, fontSize: 24 }}>
+                                  {purchase.user_name ? purchase.user_name[0] : 'U'}
+                                </text.T16>
+                              )}
+                            </div>
+                            <div style={{flex: 1}}>
+                              <text.T16 style={{
+                                ...theme.fonts.Lato_700Bold,
+                                color: theme.colors.mainColor,
+                                marginBottom: 4,
+                              }}>
+                                {purchase.user_name}
+                              </text.T16>
+                              {purchase.user_city && (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 6}}>
+                                  <MdLocationPin size={16} color={theme.colors.secondaryTextColor} />
+                                  <text.T12 style={{color: theme.colors.secondaryTextColor}}>
+                                    {purchase.user_city}
+                                  </text.T12>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          <div style={{
+                            padding: '16px',
+                            background: `${theme.colors.mainColor}08`,
+                            borderRadius: 16,
+                            marginBottom: 16,
+                            border: `1px solid ${theme.colors.mainColor}15`,
+                            flex: 1,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            justifyContent: 'center',
+                          }}>
+                            <div style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 8,
+                              marginBottom: 8,
+                            }}>
+                              <FaRegCalendarAlt size={16} color={theme.colors.mainColor} />
+                              <text.T14 style={{
+                                color: theme.colors.mainColor,
+                                ...theme.fonts.Lato_700Bold,
+                              }}>
+                                Workshop
+                              </text.T14>
+                            </div>
+                            <text.T14 style={{
+                              color: theme.colors.secondaryTextColor,
+                              lineHeight: 1.5,
+                            }}>
+                              {purchase.workshop_name}
+                            </text.T14>
+                          </div>
+
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 8,
+                            padding: '12px 16px',
+                            background: `${theme.colors.mainColor}05`,
+                            borderRadius: 12,
+                            border: `1px solid ${theme.colors.mainColor}10`,
+                          }}>
+                            <MdOutlineDateRange size={18} color={theme.colors.mainColor} />
+                            <text.T12 style={{color: theme.colors.mainColor}}>
+                              Purchased {getTimeAgo(purchase.purchase_date)}
+                            </text.T12>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* FAQs Section */}
+            {faqs.length > 0 && (
+              <div style={{marginTop: 60}}>
+                <text.H3 style={{
+                  ...theme.fonts.Lato_700Bold,
+                  marginBottom: 30,
+                  fontSize: 24,
+                  textAlign: 'center',
+                  color: theme.colors.mainColor,
+                }}>
+                  Frequently Asked Questions
+                </text.H3>
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 16,
+                  maxWidth: 800,
+                  margin: '0 auto',
+                }}>
+                  {faqs.map((faq, index) => (
+                    <div
+                      key={index}
+                      style={{
+                        borderRadius: 16,
+                        background: 'rgba(255, 255, 255, 0.9)',
+                        boxShadow: '0 4px 20px rgba(37, 73, 150, 0.08)',
+                        overflow: 'hidden',
+                        border: '1px solid rgba(37, 73, 150, 0.1)',
+                        transition: 'all 0.3s ease',
+                      }}
+                      className="hover-scale"
+                    >
+                      <details style={{ cursor: 'pointer' }}>
+                        <summary style={{
+                          ...theme.fonts.Lato_700Bold,
+                          color: theme.colors.mainColor,
+                          padding: '20px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          fontSize: 16,
+                          transition: 'all 0.3s ease',
+                        }}>
+                          <span style={{flex: 1}}>{faq.name}</span>
+                          <span style={{
+                            marginLeft: 16,
+                            fontSize: 20,
+                            transition: 'transform 0.3s ease',
+                            transform: 'rotate(0deg)',
+                            color: theme.colors.mainColor,
+                          }} className="details-arrow">
+                            ▼
+                          </span>
+                        </summary>
+                        <style jsx>{`
+                          details[open] .details-arrow {
+                            transform: rotate(180deg);
+                          }
+                          details[open] summary {
+                            border-bottom: 1px solid rgba(37, 73, 150, 0.1);
+                          }
+                          @keyframes slideDown {
+                            from { opacity: 0; transform: translateY(-10px); }
+                            to { opacity: 1; transform: translateY(0); }
+                          }
+                          details[open] p {
+                            animation: slideDown 0.3s ease forwards;
+                          }
+                        `}</style>
+                        <p style={{
+                          color: theme.colors.secondaryTextColor,
+                          padding: '20px',
+                          margin: 0,
+                          lineHeight: 1.6,
+                          background: `${theme.colors.mainColor}05`,
+                        }}>
+                          {faq.description}
+                        </p>
+                      </details>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+
           </div>
         );
 
@@ -1087,6 +2139,251 @@ export const CourseDetails: React.FC<Props> = ({id}) => {
         {/* Registration Form Slide-up */}
         {!user && showRegistration && renderRegistrationForm()}
         {renderMultipleAccountsModal()}
+
+        {/* Final CTA Section */}
+        <div style={{
+          marginTop: 80,
+          marginBottom: 100,
+          position: 'relative',
+          overflow: 'hidden',
+        }}>
+          <div style={{
+            padding: '80px 40px',
+            borderRadius: 40,
+            background: `linear-gradient(135deg, ${theme.colors.mainColor}, ${theme.colors.mainOrange})`,
+            position: 'relative',
+            overflow: 'hidden',
+            boxShadow: '0 30px 60px rgba(37, 73, 150, 0.3)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+          }}>
+            {/* Animated Background Elements */}
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: `
+                radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%)
+              `,
+              animation: 'gradientMove 15s ease infinite alternate',
+            }} />
+            <style jsx>{`
+              @keyframes gradientMove {
+                0% { background-position: 0% 50%; }
+                50% { background-position: 100% 50%; }
+                100% { background-position: 0% 50%; }
+              }
+              @keyframes float {
+                0%, 100% { transform: translateY(0); }
+                50% { transform: translateY(-20px); }
+              }
+              @keyframes pulse {
+                0%, 100% { transform: scale(1); }
+                50% { transform: scale(1.05); }
+              }
+              @keyframes shine {
+                0% { background-position: -200% center; }
+                100% { background-position: 200% center; }
+              }
+              @keyframes sparkle {
+                0% { transform: scale(0) rotate(0deg); opacity: 0; }
+                50% { opacity: 1; }
+                100% { transform: scale(1) rotate(180deg); opacity: 0; }
+              }
+              .sparkle {
+                position: absolute;
+                width: 4px;
+                height: 4px;
+                background: white;
+                border-radius: 50%;
+                animation: sparkle 2s infinite;
+              }
+              .hover-scale {
+                transition: all 0.3s ease;
+              }
+              .hover-scale:hover {
+                transform: translateY(-5px) scale(1.02);
+                box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+              }
+            `}</style>
+
+            {/* Sparkle Effects */}
+            {[...Array(20)].map((_, i) => (
+              <div
+                key={i}
+                className="sparkle"
+                style={{
+                  left: `${Math.random() * 100}%`,
+                  top: `${Math.random() * 100}%`,
+                  animationDelay: `${Math.random() * 2}s`,
+                }}
+              />
+            ))}
+
+            {/* Content */}
+            <div style={{
+              position: 'relative',
+              zIndex: 1,
+              textAlign: 'center',
+              maxWidth: 900,
+              margin: '0 auto',
+            }}>
+              <div style={{
+                display: 'inline-block',
+                padding: '12px 32px',
+                borderRadius: 30,
+                background: 'rgba(255, 255, 255, 0.2)',
+                backdropFilter: 'blur(10px)',
+                marginBottom: 24,
+                animation: 'pulse 2s infinite',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+              }}>
+                <text.T14 style={{
+                  color: theme.colors.white,
+                  ...theme.fonts.Lato_700Bold,
+                  fontSize: 16,
+                  letterSpacing: 1,
+                }}>
+                  ⭐️ Limited Time Offer - Join Now ⭐️
+                </text.T14>
+              </div>
+
+              <text.H2 style={{
+                ...theme.fonts.Lato_700Bold,
+                fontSize: 42,
+                color: theme.colors.white,
+                marginBottom: 24,
+                background: 'linear-gradient(90deg, #fff, #f0f0f0, #fff)',
+                backgroundSize: '200% auto',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                animation: 'shine 3s linear infinite',
+                textShadow: '0 2px 10px rgba(0, 0, 0, 0.2)',
+                lineHeight: 1.3,
+              }}>
+                Transform Your Teaching Career with {workshop?.name}
+              </text.H2>
+
+              <text.T16 style={{
+                color: 'rgba(255, 255, 255, 0.95)',
+                marginBottom: 50,
+                lineHeight: 1.8,
+                fontSize: 18,
+                maxWidth: 700,
+                margin: '0 auto 50px',
+                textShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+              }}>
+                Join thousands of educators who have already enhanced their skills and advanced their careers with our premium workshops. Don't miss this opportunity to elevate your teaching journey!
+              </text.T16>
+
+              <div style={{
+                display: 'flex',
+                gap: 24,
+                justifyContent: 'center',
+                flexWrap: 'wrap',
+                marginBottom: 40,
+              }}>
+                <button
+                  onClick={handleEnrollClick}
+                  disabled={isPurchased}
+                  style={{
+                    padding: '24px 48px',
+                    borderRadius: 20,
+                    background: isPurchased ? 'rgba(255, 255, 255, 0.3)' : theme.colors.white,
+                    color: isPurchased ? 'rgba(255, 255, 255, 0.7)' : theme.colors.mainColor,
+                    ...theme.fonts.Lato_700Bold,
+                    fontSize: 20,
+                    boxShadow: '0 15px 35px rgba(0, 0, 0, 0.2)',
+                    cursor: isPurchased ? 'not-allowed' : 'pointer',
+                    border: 'none',
+                    opacity: isPurchased ? 0.7 : 1,
+                    transition: 'all 0.3s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 16,
+                    position: 'relative',
+                    overflow: 'hidden',
+                  }}
+                  className="hover-scale"
+                >
+                  <div style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: 'linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent)',
+                    transform: 'translateX(-100%)',
+                    animation: 'shine 3s infinite',
+                  }} />
+                  <FaTrophy size={24} style={{ filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2))' }} />
+                  {isPurchased ? 'You Already Purchased It' : (user ? 'Enroll Now' : 'Register & Enroll')} - ₹{workshop?.type === 0 ? workshop?.price : workshop?.price_2}
+                </button>
+              </div>
+
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 20,
+                flexWrap: 'wrap',
+              }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  padding: '12px 24px',
+                  background: 'rgba(255, 255, 255, 0.15)',
+                  borderRadius: 30,
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+                }}>
+                  <FaUsers size={20} color={theme.colors.white} style={{ filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2))' }} />
+                  <text.T14 style={{color: theme.colors.white, ...theme.fonts.Lato_700Bold}}>
+                    {workshop?.total_subscribers}+ Educators Enrolled
+                  </text.T14>
+                </div>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  padding: '12px 24px',
+                  background: 'rgba(255, 255, 255, 0.15)',
+                  borderRadius: 30,
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+                }}>
+                  <FaRegStar size={20} color={theme.colors.white} style={{ filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2))' }} />
+                  <text.T14 style={{color: theme.colors.white, ...theme.fonts.Lato_700Bold}}>
+                    4.7 Rating
+                  </text.T14>
+                </div>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  padding: '12px 24px',
+                  background: 'rgba(255, 255, 255, 0.15)',
+                  borderRadius: 30,
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+                }}>
+                  <FaRegClock size={20} color={theme.colors.white} style={{ filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2))' }} />
+                  <text.T14 style={{color: theme.colors.white, ...theme.fonts.Lato_700Bold}}>
+                    {workshop?.duration} Duration
+                  </text.T14>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </main>
     );
   };

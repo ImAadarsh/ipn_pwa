@@ -9,47 +9,31 @@ const dbConfig = {
   database: process.env.DB_NAME,
 };
 
-interface FAQ extends RowDataPacket {
+interface FAQ {
   id: number;
-  name: string;
-  description: string;
-  created_at: Date;
-  updated_at: Date;
+  name: string; // This will be the question
+  description: string; // This will be the answer
 }
 
 export async function GET() {
+  const connection = await mysql.createConnection(dbConfig);
+
   try {
-    // Connect to database
-    const connection = await mysql.createConnection(dbConfig);
+    const [faqs] = await connection.execute<RowDataPacket[]>(
+      `SELECT id, name, description FROM faqs ORDER BY created_at ASC`
+    );
 
-    try {
-      // Fetch FAQs from database
-      const [faqs] = await connection.execute<FAQ[]>(
-        'SELECT * FROM faqs ORDER BY id ASC'
-      );
-
-      return NextResponse.json({
-        success: true,
-        faqs: faqs.map(faq => ({
-          id: faq.id,
-          title: faq.name,
-          content: faq.description
-        }))
-      });
-
-    } finally {
-      await connection.end();
-    }
-
+    return NextResponse.json({
+      success: true,
+      data: faqs as FAQ[],
+    });
   } catch (error) {
     console.error('Error fetching FAQs:', error);
     return NextResponse.json(
-      { 
-        success: false, 
-        message: error instanceof Error ? error.message : 'Failed to fetch FAQs',
-        details: error instanceof Error ? error.stack : undefined
-      },
+      { success: false, message: 'Failed to fetch FAQs' },
       { status: 500 }
     );
+  } finally {
+    await connection.end();
   }
 } 

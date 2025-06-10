@@ -12,24 +12,21 @@ export async function POST(request: Request) {
   let connection;
   try {
     const body = await request.json();
-    const {merchantTransactionId, code, state} = body;
+    const {payment_id, payment_status} = body;
 
-    if (!merchantTransactionId || !code || !state) {
+    if (!payment_id || !payment_status) {
       return NextResponse.json(
-        {success: false, message: 'Missing required fields'},
+        {success: false, message: 'Missing required fields.'},
         {status: 400}
       );
     }
 
     connection = await mysql.createConnection(dbConfig);
 
-    // Extract payment ID from merchantTransactionId
-    const paymentId = merchantTransactionId.split('_')[1];
-
     // Get payment details
     const [paymentRows] = await connection.execute<RowDataPacket[]>(
       'SELECT * FROM payments WHERE id = ?',
-      [paymentId]
+      [payment_id]
     );
 
     if (!paymentRows.length) {
@@ -49,7 +46,7 @@ export async function POST(request: Request) {
          SET payment_status = ?,
              updated_at = NOW()
          WHERE id = ?`,
-        [state === 'COMPLETED' ? 1 : 2, paymentId]
+        [payment_status === 'Credit' ? 1 : 2, payment_id]
       );
 
       // Update cart status
@@ -59,7 +56,7 @@ export async function POST(request: Request) {
              is_bought = ?,
              updated_at = NOW()
          WHERE payment_id = ?`,
-        [state === 'COMPLETED' ? 1 : 2, state === 'COMPLETED' ? 1 : 0, paymentId]
+        [payment_status === 'Credit' ? 1 : 2, payment_status === 'Credit' ? 1 : 0, payment_id]
       );
 
       await connection.commit();

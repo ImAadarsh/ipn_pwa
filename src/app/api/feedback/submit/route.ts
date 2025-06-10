@@ -24,7 +24,7 @@ export async function POST(request: Request) {
 
     if (!userId || !workshopId || !rating || !comment) {
       return NextResponse.json(
-        {success: false, message: 'Missing required fields'},
+        {success: false, message: 'Missing required fields.'},
         {status: 400}
       );
     }
