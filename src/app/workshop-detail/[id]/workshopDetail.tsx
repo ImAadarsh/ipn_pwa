@@ -1116,7 +1116,7 @@ export const CourseDetails: React.FC<Props> = ({id}) => {
                   }}>
                     <text.T14 style={{
                       ...theme.fonts.Lato_700Bold,
-                      fontSize: 17,
+                      fontSize: 28,
                       color: theme.colors.white,
                       marginBottom: 24,
                       textAlign: 'center',
