@@ -799,14 +799,14 @@ export const CourseDetails: React.FC<Props> = ({id}) => {
                   }
                   .timer-unit {
                     display: inline-block;
-                    margin: 0 15px;
-                    padding: 15px 20px;
+                    margin: 0 5px;
+                    padding: 4px 6px;
                     background: rgba(255, 255, 255, 0.15);
                     border-radius: 15px;
                     backdrop-filter: blur(10px);
                     border: 1px solid rgba(255, 255, 255, 0.3);
                     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-                    min-width: 100px;
+                    min-width: 55px;
                     display: flex;
                     flex-direction: column;
                     align-items: center;
@@ -821,7 +821,7 @@ export const CourseDetails: React.FC<Props> = ({id}) => {
                     box-shadow: 0 8px 25px rgba(0,0,0,0.2);
                   }
                   .timer-number {
-                    font-size: 3.5rem;
+                    font-size: 2.5rem;
                     font-weight: 800;
                     line-height: 1;
                     color: #FFF;
@@ -831,7 +831,7 @@ export const CourseDetails: React.FC<Props> = ({id}) => {
                     transition: all 0.3s ease;
                   }
                   .timer-label {
-                    font-size: 1rem;
+                    font-size: 0.6rem;
                     font-weight: 600;
                     margin-top: 10px;
                     opacity: 0.8;
@@ -860,23 +860,23 @@ export const CourseDetails: React.FC<Props> = ({id}) => {
                     transform: translateY(2px);
                   }
                 `}</style>
-                <text.H2 style={{
+                <text.T14 style={{
                   ...theme.fonts.Lato_700Bold,
-                  fontSize: 32,
-                  marginBottom: 20,
+                  fontSize: 16,
+                  marginBottom: 3,
                   textShadow: '0 2px 5px rgba(0,0,0,0.3)',
                   letterSpacing: 2,
                   color: 'rgba(255, 255, 255, 0.9)',
                 }}>
                   Limited Time Offer !!
-                </text.H2>
-                <text.T16 style={{
+                </text.T14>
+                <text.T10 style={{
                   color: 'rgba(255, 255, 255, 0.9)',
                   marginBottom: 30,
                   fontWeight: 600,
                 }}>
                   Workshop starts in:
-                </text.T16>
+                </text.T10>
                 <div id="countdown-timer" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                   <div className="timer-unit">
                     <div className="timer-number">{timeLeft.days}</div>
@@ -905,7 +905,7 @@ export const CourseDetails: React.FC<Props> = ({id}) => {
                     background: isPurchased ? 'rgba(255, 255, 255, 0.3)' : theme.colors.white,
                     color: isPurchased ? 'rgba(255, 255, 255, 0.7)' : theme.colors.mainColor,
                     ...theme.fonts.Lato_700Bold,
-                    fontSize: 18,
+                    fontSize: 14,
                     boxShadow: '0 8px 20px rgba(0,0,0,0.3)',
                     cursor: isPurchased ? 'not-allowed' : 'pointer',
                     border: 'none',
@@ -957,7 +957,7 @@ export const CourseDetails: React.FC<Props> = ({id}) => {
 
               <div style={{
                 position: 'relative',
-                padding: '60px 40px',
+                padding: '30px 15px',
                 borderRadius: 30,
                 background: `linear-gradient(135deg, ${theme.colors.mainColor} 0%, ${theme.colors.mainColor}dd 100%)`,
                 overflow: 'hidden',
@@ -997,13 +997,14 @@ export const CourseDetails: React.FC<Props> = ({id}) => {
                       <text.T14 style={{
                         color: theme.colors.white,
                         ...theme.fonts.Lato_700Bold,
+                        textAlign: 'center'
                       }}>
                         South Asia's #1 Teacher Training Platform
                       </text.T14>
                     </div>
-                    <text.H2 style={{
+                    <text.T16 style={{
                       ...theme.fonts.Lato_700Bold,
-                      fontSize: 36,
+                      fontSize: 25,
                       color: theme.colors.white,
                       marginBottom: 16,
                       background: 'linear-gradient(90deg, #fff, #f0f0f0, #fff)',
@@ -1011,16 +1012,18 @@ export const CourseDetails: React.FC<Props> = ({id}) => {
                       WebkitBackgroundClip: 'text',
                       WebkitTextFillColor: 'transparent',
                       animation: 'shine 3s linear infinite',
+                      textAlign: 'center'
                     }}>
                       Join {stats?.total_users_count || 0}+ Users
-                    </text.H2>
-                    <text.T16 style={{
+                    </text.T16>
+                    <text.T10 style={{
                       color: 'rgba(255, 255, 255, 0.9)',
                       maxWidth: 600,
                       margin: '0 auto',
+                      textAlign: 'justify'
                     }}>
                       Be part of a global movement that's revolutionizing teaching methods and empowering educators across {stats?.countries_count || 0} countries.
-                    </text.T16>
+                    </text.T10>
                   </div>
 
                   {/* Stats Grid */}
@@ -1104,26 +1107,26 @@ export const CourseDetails: React.FC<Props> = ({id}) => {
 
                   {/* Testimonials */}
                   <div style={{
-                    padding: '32px',
+                    padding: '8px',
                     borderRadius: 20,
                     background: 'rgba(255, 255, 255, 0.1)',
                     backdropFilter: 'blur(10px)',
                     border: '1px solid rgba(255, 255, 255, 0.2)',
                     marginBottom: 40,
                   }}>
-                    <text.H3 style={{
+                    <text.T14 style={{
                       ...theme.fonts.Lato_700Bold,
-                      fontSize: 24,
+                      fontSize: 17,
                       color: theme.colors.white,
                       marginBottom: 24,
                       textAlign: 'center',
                     }}>
                       What Our Educators Say
-                    </text.H3>
+                    </text.T14>
                     {reviews.length > 0 ? (
                       <div style={{
                         display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
                         gap: 24,
                       }}>
                         {reviews.map((review, index) => (
@@ -2245,17 +2248,18 @@ export const CourseDetails: React.FC<Props> = ({id}) => {
                 <text.T14 style={{
                   color: theme.colors.white,
                   ...theme.fonts.Lato_700Bold,
-                  fontSize: 16,
+                  fontSize: 12,
                   letterSpacing: 1,
                 }}>
                   ⭐️ Limited Time Offer - Join Now ⭐️
                 </text.T14>
               </div>
 
-              <text.H2 style={{
+              <text.T14 style={{
                 ...theme.fonts.Lato_700Bold,
-                fontSize: 42,
+                fontSize: 25,
                 color: theme.colors.white,
+                textAlign: 'center',
                 marginBottom: 24,
                 background: 'linear-gradient(90deg, #fff, #f0f0f0, #fff)',
                 backgroundSize: '200% auto',
@@ -2266,13 +2270,14 @@ export const CourseDetails: React.FC<Props> = ({id}) => {
                 lineHeight: 1.3,
               }}>
                 Transform Your Teaching Career with {workshop?.name}
-              </text.H2>
+              </text.T14>
 
               <text.T16 style={{
                 color: 'rgba(255, 255, 255, 0.95)',
                 marginBottom: 50,
                 lineHeight: 1.8,
-                fontSize: 18,
+                fontSize: 14,
+                textAlign: 'justify',
                 maxWidth: 700,
                 margin: '0 auto 50px',
                 textShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
