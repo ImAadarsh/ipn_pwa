@@ -5,6 +5,7 @@ import {theme} from '../constants';
 import {Onboarding} from './Onboarding';
 import {URLS} from '../config';
 import {GoogleAnalytics} from '../components/GoogleAnalytics';
+import HomePage from './home/page';
 
 export const metadata: Metadata = {
   title: 'IPN Academy - Your Gateway to Professional Excellence',
@@ -62,7 +63,7 @@ export default function StartPage() {
   return (
     <>
       <GoogleAnalytics />
-      <Onboarding />
+      <HomePage />
     </>
   );
 }
