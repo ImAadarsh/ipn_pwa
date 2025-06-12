@@ -2,7 +2,6 @@ import React from 'react';
 import type {Metadata, Viewport} from 'next';
 
 import {theme} from '../constants';
-import {Onboarding} from './Onboarding';
 import {URLS} from '../config';
 import {GoogleAnalytics} from '../components/GoogleAnalytics';
 import HomePage from './home/page';
